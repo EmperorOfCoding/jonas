@@ -7,7 +7,8 @@
       "Bash(node --test tests/servicos-validation.test.ts)",
       "Bash(npm test *)",
       "Bash(npx tsc *)",
-      "Skill(frontend-design)"
+      "Skill(frontend-design)",
+      "Bash(npx skills *)"
     ]
   },
   "enableAllProjectMcpServers": true,
