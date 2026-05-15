@@ -73,3 +73,10 @@ npm run test
 npm run lint
 npm run build
 ```
+
+## Progressive Web App (PWA)
+
+O aplicativo foi configurado como um PWA (Progressive Web App) usando a biblioteca `@ducanh2912/next-pwa`. Isso significa que ele pode ser instalado como um aplicativo nativo no celular ou no computador diretamente pelo navegador.
+- O Service Worker é gerado automaticamente durante o `npm run build`.
+- Para instalar no iOS (Safari): Toque no botão de Compartilhar > "Adicionar à Tela de Início".
+- Para instalar no Android (Chrome): Toque no menu (três pontos) > "Adicionar à tela inicial" ou aceite o prompt automático de instalação.
