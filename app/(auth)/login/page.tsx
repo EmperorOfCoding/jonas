@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import PWAInstallPrompt from "@/app/components/PWAInstallPrompt";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -114,6 +115,9 @@ export default function LoginPage() {
             <span className="h-px w-10 bg-white/25" />
           </div>
         </div>
+
+        {/* PWA install banner */}
+        <PWAInstallPrompt />
 
         {/* Login card — bottom sheet feel */}
         <div className="card-in relative mx-3 mb-4 rounded-[28px] bg-white px-7 pb-8 pt-7 shadow-[0_-4px_40px_rgba(0,0,0,0.25)]">
