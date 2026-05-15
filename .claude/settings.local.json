@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(Remove-Item *)",
+      "Bash(npm run *)",
+      "Bash(node --test tests/servicos-validation.test.ts)",
+      "Bash(npm test *)",
+      "Bash(npx tsc *)",
+      "Skill(frontend-design)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "supabase"
+  ]
+}
