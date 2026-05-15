@@ -7,9 +7,20 @@ const MESES = [
 ];
 const MESES_CURTOS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
+function todayInput() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function formatDia(iso: string) {
+  return `${iso.slice(8)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}`;
+}
+
 export default async function RelatorioPage(props: PageProps<"/relatorio">) {
   const searchParams = await props.searchParams;
-  const modo = searchParams?.modo === "periodo" ? "periodo" : "mes";
+
+  const rawModo = searchParams?.modo;
+  const modo = rawModo === "periodo" ? "periodo" : rawModo === "dia" ? "dia" : "mes";
 
   const now = new Date();
   const currentYear = now.getFullYear();
@@ -17,10 +28,13 @@ export default async function RelatorioPage(props: PageProps<"/relatorio">) {
 
   const ano = Number(searchParams?.ano) || currentYear;
   const mes = Math.min(12, Math.max(1, Number(searchParams?.mes) || currentMonth));
+  const dia = (searchParams?.dia as string | undefined) || todayInput();
 
   const range =
     modo === "mes"
       ? parseMesRange(mes, ano)
+      : modo === "dia"
+      ? parseReportRange(dia, dia)
       : parseReportRange(
           searchParams?.inicio as string | undefined,
           searchParams?.fim as string | undefined,
@@ -35,11 +49,14 @@ export default async function RelatorioPage(props: PageProps<"/relatorio">) {
   const labelPeriodo =
     modo === "mes"
       ? `${MESES[mes - 1]} ${ano}`
+      : modo === "dia"
+      ? formatDia(dia)
       : `${inicio.slice(8)}/${inicio.slice(5, 7)} – ${fim.slice(8)}/${fim.slice(5, 7)}`;
 
   const mesHref = (n: number) => `/relatorio?modo=mes&mes=${n}&ano=${ano}`;
-  const periodoHref = `/relatorio?modo=periodo&inicio=${inicio}&fim=${fim}`;
   const mesActiveHref = `/relatorio?modo=mes&mes=${mes}&ano=${ano}`;
+  const diaActiveHref = `/relatorio?modo=dia&dia=${dia}`;
+  const periodoHref = `/relatorio?modo=periodo&inicio=${inicio}&fim=${fim}`;
 
   return (
     <div className="p-6 space-y-6">
@@ -48,7 +65,7 @@ export default async function RelatorioPage(props: PageProps<"/relatorio">) {
         <p className="text-sm text-slate-400 mt-1">Dados de desempenho do período.</p>
       </div>
 
-      {/* Mode toggle */}
+      {/* Mode toggle — 3 segments */}
       <div className="flex bg-slate-100 rounded-2xl p-1 gap-1">
         <a
           href={mesActiveHref}
@@ -59,6 +76,16 @@ export default async function RelatorioPage(props: PageProps<"/relatorio">) {
           }`}
         >
           Por Mês
+        </a>
+        <a
+          href={diaActiveHref}
+          className={`flex-1 py-2.5 rounded-xl text-sm font-bold text-center transition-all ${
+            modo === "dia"
+              ? "bg-white text-dark-navy shadow-sm"
+              : "text-slate-500 hover:text-slate-700"
+          }`}
+        >
+          Por Dia
         </a>
         <a
           href={periodoHref}
@@ -72,7 +99,7 @@ export default async function RelatorioPage(props: PageProps<"/relatorio">) {
         </a>
       </div>
 
-      {/* Month tabs or date filter */}
+      {/* Filter row */}
       {modo === "mes" ? (
         <div className="overflow-x-auto -mx-6 px-6">
           <div className="flex gap-2 w-max pb-1">
@@ -94,6 +121,32 @@ export default async function RelatorioPage(props: PageProps<"/relatorio">) {
             })}
           </div>
         </div>
+      ) : modo === "dia" ? (
+        <form method="get">
+          <input type="hidden" name="modo" value="dia" />
+          <div className="flex gap-3 items-end">
+            <div className="flex-1 space-y-1">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">
+                Data
+              </label>
+              <div className="bg-white border border-slate-100 rounded-xl px-3 py-2 flex items-center gap-2">
+                <Calendar size={14} className="text-slate-400 shrink-0" />
+                <input
+                  name="dia"
+                  type="date"
+                  defaultValue={dia}
+                  className="bg-transparent border-none text-xs w-full p-0 font-bold text-dark-navy outline-none"
+                />
+              </div>
+            </div>
+            <button
+              type="submit"
+              className="px-5 py-2 bg-primary text-white text-xs font-bold rounded-xl mb-0.5"
+            >
+              Ver
+            </button>
+          </div>
+        </form>
       ) : (
         <form method="get" className="flex gap-4">
           <input type="hidden" name="modo" value="periodo" />

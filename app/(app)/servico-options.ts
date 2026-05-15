@@ -7,5 +7,5 @@ export const PRECO_POR_TIPO: Record<(typeof TIPOS_LAVAGEM)[number], string> = {
 
 export const LOCAIS = ["Garagem", "Estacionamento", "Rua", "Condomínio"] as const;
 export const PAGAMENTOS = ["Dinheiro", "Pix", "Cartão"] as const;
-export const ANDARES = Array.from({ length: 20 }, (_, i) => `${i + 1}º`);
+export const ANDARES = Array.from({ length: 30 }, (_, i) => `${i + 1}º`);
 export const FUNCIONARIOS = ["João Silva", "Maria Souza", "José Santos", "Ana Lima"];
