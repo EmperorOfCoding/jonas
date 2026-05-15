@@ -49,13 +49,22 @@ export default function PWAInstallPrompt() {
     setPlatform(p);
 
     if (p === "android") {
-      // Captura o evento nativo do Chrome para Android
+      setVisible(true); // Sempre mostra o banner no Android também
+      
+      // Tenta capturar o evento para exibir o botão mágico
       const handler = (e: Event) => {
         e.preventDefault();
         setDeferredPrompt(e as BeforeInstallPromptEvent);
-        setVisible(true);
       };
       window.addEventListener("beforeinstallprompt", handler);
+      
+      // Checa se o evento já disparou antes do React montar (uma técnica comum é checar window.deferredPrompt)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if ((window as any).deferredPrompt) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setDeferredPrompt((window as any).deferredPrompt);
+      }
+
       return () => window.removeEventListener("beforeinstallprompt", handler);
     } else {
       // iOS: sempre mostra as instruções manuais
@@ -139,7 +148,9 @@ export default function PWAInstallPrompt() {
               </p>
             ) : (
               <p className="mt-0.5 text-[11px] leading-relaxed text-white/70">
-                Adicione à tela inicial para acesso rápido como um app nativo.
+                {deferredPrompt 
+                  ? "Adicione à tela inicial para acesso rápido como um app nativo."
+                  : "Toque no menu (⋮) do Chrome e escolha 'Adicionar à tela inicial'."}
               </p>
             )}
           </div>
