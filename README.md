@@ -80,3 +80,8 @@ O aplicativo foi configurado como um PWA (Progressive Web App) usando a bibliote
 - O Service Worker é gerado automaticamente durante o `npm run build`.
 - Para instalar no iOS (Safari): Toque no botão de Compartilhar > "Adicionar à Tela de Início".
 - Para instalar no Android (Chrome): Toque no menu (três pontos) > "Adicionar à tela inicial" ou aceite o prompt automático de instalação.
+
+## Últimas Atualizações
+
+- **Suporte a Múltiplos Funcionários:** A aplicação agora permite selecionar até 4 funcionários simultâneos responsáveis por realizar o mesmo serviço de lavagem.
+- **Correções de Hydration (Next.js):** Ajuste fino em componentes como `AtividadesClient.tsx`, `layout.tsx` e tela de Registro para evitar erros de hidratação (SSR vs Client-side) devido a diferenças de fuso horário e locale nas funções do objeto `Date`.

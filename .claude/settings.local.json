@@ -8,7 +8,8 @@
       "Bash(npm test *)",
       "Bash(npx tsc *)",
       "Skill(frontend-design)",
-      "Bash(npx skills *)"
+      "Bash(npx skills *)",
+      "Skill(caveman)"
     ]
   },
   "enableAllProjectMcpServers": true,

@@ -46,12 +46,13 @@ export default function RegistroPage() {
   const [tipo, setTipo] = useState<string>("");
   const [andar, setAndar] = useState("");
   const [local, setLocal] = useState<string>("");
-  const [funcionario, setFuncionario] = useState("");
-  const [dataHora, setDataHora] = useState(nowLocalISO());
+  const [funcionarios, setFuncionarios] = useState<string[]>([]);
+  const [dataHora, setDataHora] = useState("");
   const [pagamento, setPagamento] = useState<string>("");
   const [valor, setValor] = useState("");
 
   useEffect(() => {
+    setDataHora(nowLocalISO());
     carregarResumoRegistro().then((result) => {
       if (result.ok) setCarrosHoje(result.carrosHoje);
     });
@@ -69,7 +70,7 @@ export default function RegistroPage() {
       tipo_lavagem: tipo,
       andar,
       local,
-      funcionario,
+      funcionario: funcionarios.join(", "),
       data_hora: dataHora,
       forma_pagamento: pagamento,
       valor,
@@ -93,10 +94,18 @@ export default function RegistroPage() {
     setTipo("");
     setAndar("");
     setLocal("");
-    setFuncionario("");
+    setFuncionarios([]);
     setDataHora(nowLocalISO());
     setPagamento("");
     setValor("");
+  }
+
+  function toggleFuncionario(f: string) {
+    setFuncionarios((prev) => {
+      if (prev.includes(f)) return prev.filter((x) => x !== f);
+      if (prev.length >= 4) return prev;
+      return [...prev, f];
+    });
   }
 
   function handleTipoChange(nextTipo: (typeof TIPOS_LAVAGEM)[number]) {
@@ -200,21 +209,19 @@ export default function RegistroPage() {
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 space-y-4">
           <div className="space-y-2">
             <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">
-              Funcionário
+              Funcionário{" "}
+              <span className="normal-case font-normal text-slate-300">(máx. 4)</span>
             </label>
-            <select
-              required
-              value={funcionario}
-              onChange={(e) => setFuncionario(e.target.value)}
-              className="w-full px-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-dark-navy font-bold outline-none appearance-none focus:ring-2 focus:ring-primary transition-all"
-            >
-              <option value="">Selecionar funcionário</option>
+            <div className="flex flex-wrap gap-2">
               {FUNCIONARIOS.map((f) => (
-                <option key={f} value={f}>
-                  {f}
-                </option>
+                <Chip
+                  key={f}
+                  label={f}
+                  active={funcionarios.includes(f)}
+                  onClick={() => toggleFuncionario(f)}
+                />
               ))}
-            </select>
+            </div>
           </div>
 
           <div className="space-y-3">
@@ -270,7 +277,7 @@ export default function RegistroPage() {
 
         <button
           type="submit"
-          disabled={loading || !tipo || !local || !pagamento}
+          disabled={loading || !tipo || !local || !pagamento || funcionarios.length === 0}
           className="w-full bg-primary text-white font-headline font-bold py-6 rounded-2xl shadow-xl shadow-primary/30 active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
         >
           <CheckCircle size={24} />

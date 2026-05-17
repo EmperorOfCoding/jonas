@@ -32,8 +32,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
         <div className="relative z-10 px-6 mt-1">
-          <h2 className="text-white text-lg font-bold">{greeting}, Jonas!</h2>
-          <p className="text-white/40 text-xs uppercase tracking-widest font-bold capitalize">
+          <h2 suppressHydrationWarning className="text-white text-lg font-bold">{greeting}, Jonas!</h2>
+          <p suppressHydrationWarning className="text-white/40 text-xs uppercase tracking-widest font-bold capitalize">
             {dateStr}
           </p>
         </div>

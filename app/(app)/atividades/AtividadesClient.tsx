@@ -62,10 +62,12 @@ function ServiceItem({
             })}
           </span>
           <span className="text-[10px] uppercase font-bold text-slate-300 tracking-wider flex items-center gap-1">
-            {new Date(servico.data_hora).toLocaleTimeString("pt-BR", {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
+            <span suppressHydrationWarning>
+              {new Date(servico.data_hora).toLocaleTimeString("pt-BR", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </span>
             <ChevronDown
               size={14}
               className={`transition-transform ${expanded ? "rotate-180" : ""}`}
@@ -104,7 +106,7 @@ function ServiceItem({
             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
               Data
             </span>
-            <span className="text-sm font-semibold text-dark-navy">
+            <span suppressHydrationWarning className="text-sm font-semibold text-dark-navy">
               {new Date(servico.data_hora).toLocaleDateString("pt-BR", {
                 day: "2-digit",
                 month: "2-digit",
@@ -185,15 +187,37 @@ function EditItem({
             <option key={t} value={t}>{t}</option>
           ))}
         </select>
-        <select
-          value={form.funcionario}
-          onChange={(e) => patchForm("funcionario", e.target.value)}
-          className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-sm font-bold text-dark-navy outline-none focus:ring-2 focus:ring-primary"
-        >
-          {FUNCIONARIOS.map((f) => (
-            <option key={f} value={f}>{f}</option>
-          ))}
-        </select>
+        <div className="col-span-2 flex flex-wrap gap-1.5">
+          {FUNCIONARIOS.map((f) => {
+            const selected = form.funcionario.split(",").map((s) => s.trim()).filter(Boolean);
+            const isActive = selected.includes(f);
+            return (
+              <button
+                key={f}
+                type="button"
+                onClick={() => {
+                  const current = form.funcionario.split(",").map((s) => s.trim()).filter(Boolean);
+                  let next: string[];
+                  if (current.includes(f)) {
+                    next = current.filter((x) => x !== f);
+                  } else if (current.length < 4) {
+                    next = [...current, f];
+                  } else {
+                    return;
+                  }
+                  patchForm("funcionario", next.join(", "));
+                }}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                  isActive
+                    ? "bg-primary text-white"
+                    : "bg-slate-100 text-slate-600"
+                }`}
+              >
+                {f}
+              </button>
+            );
+          })}
+        </div>
         <select
           value={form.local}
           onChange={(e) => patchForm("local", e.target.value)}

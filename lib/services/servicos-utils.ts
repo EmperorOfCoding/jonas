@@ -111,8 +111,14 @@ export function summarizeServicos(lista: Servico[]) {
   const parteFuncionarios = receitaTotal - parteCEO;
 
   const porFuncionario = lista.reduce<Record<string, number>>((acc, servico) => {
-    const funcionario = servico.funcionario || "Sem funcionario";
-    acc[funcionario] = (acc[funcionario] ?? 0) + getParteFuncionario(servico.valor);
+    const nomes = (servico.funcionario || "Sem funcionario")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const parte = getParteFuncionario(servico.valor) / nomes.length;
+    for (const nome of nomes) {
+      acc[nome] = (acc[nome] ?? 0) + parte;
+    }
     return acc;
   }, {});
 
