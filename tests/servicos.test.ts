@@ -93,7 +93,6 @@ test("funcionariosRanking is sorted descending by revenue", () => {
 });
 
 test("veiculosFrequentes returns top 5 by wash count", () => {
-  const placas = ["AAA", "BBB", "CCC", "DDD", "EEE", "FFF"];
   // AAA appears 3x, BBB 2x, rest 1x
   const lista = [
     makeServico({ placa: "AAA" }),

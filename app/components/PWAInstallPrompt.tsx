@@ -46,30 +46,32 @@ export default function PWAInstallPrompt() {
     const p = detectPlatform();
     if (!p) return;
 
-    setPlatform(p);
+    const timer = setTimeout(() => {
+      setPlatform(p);
+      setVisible(true);
+      // Checa se o evento já disparou antes do React montar (uma técnica comum é checar window.deferredPrompt)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if (p === "android" && (window as any).deferredPrompt) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setDeferredPrompt((window as any).deferredPrompt);
+      }
+    }, 0);
 
     if (p === "android") {
-      setVisible(true); // Sempre mostra o banner no Android também
-      
       // Tenta capturar o evento para exibir o botão mágico
       const handler = (e: Event) => {
         e.preventDefault();
         setDeferredPrompt(e as BeforeInstallPromptEvent);
       };
       window.addEventListener("beforeinstallprompt", handler);
-      
-      // Checa se o evento já disparou antes do React montar (uma técnica comum é checar window.deferredPrompt)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if ((window as any).deferredPrompt) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        setDeferredPrompt((window as any).deferredPrompt);
-      }
 
-      return () => window.removeEventListener("beforeinstallprompt", handler);
-    } else {
-      // iOS: sempre mostra as instruções manuais
-      setVisible(true);
+      return () => {
+        clearTimeout(timer);
+        window.removeEventListener("beforeinstallprompt", handler);
+      };
     }
+
+    return () => clearTimeout(timer);
   }, []);
 
   function dismiss() {

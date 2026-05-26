@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { Car, ChevronDown } from "lucide-react";
 import type { Servico, UpdateServicoInput } from "@/lib/services/servicos";
-import { ANDARES, FUNCIONARIOS, LOCAIS, PAGAMENTOS, TIPOS_LAVAGEM } from "../servico-options";
+import { ANDARES, FUNCIONARIOS, LOCAIS, TIPOS_LAVAGEM } from "../servico-options";
 import { atualizarServico, excluirServico } from "./actions";
 
 function toLocalDateTime(value: string) {
@@ -21,7 +21,7 @@ function fromServico(servico: Servico): UpdateServicoInput {
     local: servico.local,
     funcionario: servico.funcionario,
     data_hora: toLocalDateTime(servico.data_hora),
-    forma_pagamento: servico.forma_pagamento,
+    forma_pagamento: "Mensal",
     valor: String(servico.valor),
   };
 }
@@ -92,15 +92,9 @@ function ServiceItem({
           </div>
           <div className="flex flex-col">
             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-              Andar
+              Torre
             </span>
             <span className="text-sm font-semibold text-dark-navy">{servico.andar}</span>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-              Pagamento
-            </span>
-            <span className="text-sm font-semibold text-dark-navy">{servico.forma_pagamento}</span>
           </div>
           <div className="flex flex-col">
             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
@@ -166,7 +160,7 @@ function EditItem({
         <input
           value={form.placa}
           onChange={(e) => patchForm("placa", e.target.value.toUpperCase())}
-          placeholder="2201 BYD"
+          placeholder="Modelo Andar"
           className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 font-mono text-sm font-black uppercase tracking-widest text-dark-navy outline-none focus:ring-2 focus:ring-primary"
         />
         <input
@@ -233,16 +227,7 @@ function EditItem({
           className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-sm font-bold text-dark-navy outline-none focus:ring-2 focus:ring-primary"
         >
           {ANDARES.map((a) => (
-            <option key={a} value={a}>{a} andar</option>
-          ))}
-        </select>
-        <select
-          value={form.forma_pagamento}
-          onChange={(e) => patchForm("forma_pagamento", e.target.value)}
-          className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-sm font-bold text-dark-navy outline-none focus:ring-2 focus:ring-primary"
-        >
-          {PAGAMENTOS.map((p) => (
-            <option key={p} value={p}>{p}</option>
+            <option key={a} value={a}>{a}</option>
           ))}
         </select>
         <input
@@ -312,7 +297,7 @@ export function AtividadesClient({ initialServicos }: { initialServicos: Servico
                 local: form.local,
                 funcionario: form.funcionario,
                 data_hora: new Date(form.data_hora).toISOString(),
-                forma_pagamento: form.forma_pagamento,
+                forma_pagamento: "Mensal",
                 valor: Number(form.valor.replace(",", ".")),
               }
             : s,

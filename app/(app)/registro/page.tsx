@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { MapPin, DollarSign, CheckCircle, AlertCircle } from "lucide-react";
 import { carregarResumoRegistro, registrarServico } from "./actions";
-import { ANDARES, FUNCIONARIOS, LOCAIS, PAGAMENTOS, PRECO_POR_TIPO, TIPOS_LAVAGEM } from "../servico-options";
+import { ANDARES, FUNCIONARIOS, LOCAIS, PRECO_POR_TIPO, TIPOS_LAVAGEM } from "../servico-options";
 
 function nowLocalISO() {
   const d = new Date();
@@ -48,14 +48,17 @@ export default function RegistroPage() {
   const [local, setLocal] = useState<string>("");
   const [funcionarios, setFuncionarios] = useState<string[]>([]);
   const [dataHora, setDataHora] = useState("");
-  const [pagamento, setPagamento] = useState<string>("");
+  const [pagamento, setPagamento] = useState<string>("Mensal");
   const [valor, setValor] = useState("");
 
   useEffect(() => {
-    setDataHora(nowLocalISO());
+    const timer = setTimeout(() => {
+      setDataHora(nowLocalISO());
+    }, 0);
     carregarResumoRegistro().then((result) => {
       if (result.ok) setCarrosHoje(result.carrosHoje);
     });
+    return () => clearTimeout(timer);
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -63,7 +66,7 @@ export default function RegistroPage() {
     setLoading(true);
     setError(null);
 
-    const identificacao = `${apartamento.trim()} ${nomeVeiculo.trim().toUpperCase()}`.trim();
+    const identificacao = `${nomeVeiculo.trim().toUpperCase()} ${apartamento.trim()}`.trim();
 
     const result = await registrarServico({
       placa: identificacao,
@@ -96,7 +99,7 @@ export default function RegistroPage() {
     setLocal("");
     setFuncionarios([]);
     setDataHora(nowLocalISO());
-    setPagamento("");
+    setPagamento("Mensal");
     setValor("");
   }
 
@@ -141,18 +144,18 @@ export default function RegistroPage() {
             <div className="flex gap-3">
               <input
                 required
-                value={apartamento}
-                onChange={(e) => setApartamento(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                placeholder="2201"
-                inputMode="numeric"
-                className="w-28 bg-slate-50 border border-slate-100 rounded-2xl px-4 py-5 text-2xl font-black tracking-[2px] placeholder:text-slate-200 outline-none focus:ring-2 focus:ring-primary transition-all text-dark-navy text-center shrink-0"
+                value={nomeVeiculo}
+                onChange={(e) => setNomeVeiculo(e.target.value.toUpperCase())}
+                placeholder="Modelo"
+                className="w-3/5 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-5 text-2xl font-black tracking-[2px] uppercase placeholder:text-slate-200 outline-none focus:ring-2 focus:ring-primary transition-all text-dark-navy text-center"
               />
               <input
                 required
-                value={nomeVeiculo}
-                onChange={(e) => setNomeVeiculo(e.target.value.toUpperCase())}
-                placeholder="BYD"
-                className="flex-1 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-5 text-2xl font-black tracking-[2px] uppercase placeholder:text-slate-200 outline-none focus:ring-2 focus:ring-primary transition-all text-dark-navy"
+                value={apartamento}
+                onChange={(e) => setApartamento(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                placeholder="Andar"
+                inputMode="numeric"
+                className="w-2/5 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-5 text-2xl font-black tracking-[2px] placeholder:text-slate-200 outline-none focus:ring-2 focus:ring-primary transition-all text-dark-navy text-center"
               />
             </div>
           </div>
@@ -169,11 +172,11 @@ export default function RegistroPage() {
           </div>
         </div>
 
-        {/* Andar + local */}
+        {/* Torre + local */}
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 space-y-4">
           <div className="space-y-2">
             <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">
-              Andar do Cliente
+              Torre
             </label>
             <div className="relative">
               <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
@@ -183,10 +186,10 @@ export default function RegistroPage() {
                 onChange={(e) => setAndar(e.target.value)}
                 className="w-full pl-10 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-dark-navy font-bold outline-none focus:ring-2 focus:ring-primary transition-all appearance-none"
               >
-                <option value="">Selecionar andar</option>
+                <option value="">Selecionar torre</option>
                 {ANDARES.map((a) => (
                   <option key={a} value={a}>
-                    {a} andar
+                    {a}
                   </option>
                 ))}
               </select>
@@ -220,17 +223,6 @@ export default function RegistroPage() {
                   active={funcionarios.includes(f)}
                   onClick={() => toggleFuncionario(f)}
                 />
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">
-              Forma de Pagamento
-            </label>
-            <div className="flex gap-2 flex-wrap">
-              {PAGAMENTOS.map((p) => (
-                <Chip key={p} label={p} active={pagamento === p} onClick={() => setPagamento(p)} />
               ))}
             </div>
           </div>
@@ -277,7 +269,7 @@ export default function RegistroPage() {
 
         <button
           type="submit"
-          disabled={loading || !tipo || !local || !pagamento || funcionarios.length === 0}
+          disabled={loading || !tipo || !local || funcionarios.length === 0}
           className="w-full bg-primary text-white font-headline font-bold py-6 rounded-2xl shadow-xl shadow-primary/30 active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
         >
           <CheckCircle size={24} />

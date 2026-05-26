@@ -23,7 +23,22 @@ export async function GET(request: NextRequest) {
       request.nextUrl.searchParams.get("inicio"),
       request.nextUrl.searchParams.get("fim")
     );
-    const lista = await listServicos({ from, to });
+    const filterTorre = request.nextUrl.searchParams.get("torre");
+    const filterLocal = request.nextUrl.searchParams.get("local");
+    const query = request.nextUrl.searchParams.get("q");
+
+    let lista = await listServicos({ from, to });
+    if (filterTorre) {
+      lista = lista.filter((s) => s.andar === filterTorre);
+    }
+    if (filterLocal) {
+      lista = lista.filter((s) => s.local === filterLocal);
+    }
+    if (query) {
+      const q = query.trim().toUpperCase();
+      lista = lista.filter((s) => s.placa.toUpperCase().includes(q));
+    }
+
     const resumo = summarizeServicos(lista);
 
     const rows = [
@@ -40,10 +55,9 @@ export async function GET(request: NextRequest) {
         "Data/Hora",
         "Placa",
         "Tipo",
-        "Andar",
+        "Torre",
         "Local",
         "Funcionario",
-        "Pagamento",
         "Valor",
         "Parte CEO",
         "Parte funcionario",
@@ -55,7 +69,6 @@ export async function GET(request: NextRequest) {
         servico.andar,
         servico.local,
         servico.funcionario,
-        servico.forma_pagamento,
         formatMoney(servico.valor),
         formatMoney(getParteCEO(servico.valor)),
         formatMoney(getParteFuncionario(servico.valor)),

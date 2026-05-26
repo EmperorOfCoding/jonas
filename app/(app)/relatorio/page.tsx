@@ -1,5 +1,7 @@
-import { Calendar, CheckCircle, Download, FileText } from "lucide-react";
-import { listServicos, parseMesRange, parseReportRange, summarizeServicos } from "@/lib/services/servicos";
+import { Calendar } from "lucide-react";
+import { listServicos, parseMesRange, parseReportRange } from "@/lib/services/servicos";
+import { LOCAIS } from "../servico-options";
+import RelatorioClient from "./RelatorioClient";
 
 const MESES = [
   "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -42,9 +44,16 @@ export default async function RelatorioPage(props: PageProps<"/relatorio">) {
 
   const { inicio, fim, from, to } = range;
 
-  const lista = await listServicos({ from, to });
-  const { totalServicos, receitaTotal, ticketMedio, parteCEO, parteFuncionarios } =
-    summarizeServicos(lista);
+  const filterTorre = searchParams?.torre as string | undefined;
+  const filterLocal = searchParams?.local as string | undefined;
+
+  let lista = await listServicos({ from, to });
+  if (filterTorre) {
+    lista = lista.filter((s) => s.andar === filterTorre);
+  }
+  if (filterLocal) {
+    lista = lista.filter((s) => s.local === filterLocal);
+  }
 
   const labelPeriodo =
     modo === "mes"
@@ -53,10 +62,13 @@ export default async function RelatorioPage(props: PageProps<"/relatorio">) {
       ? formatDia(dia)
       : `${inicio.slice(8)}/${inicio.slice(5, 7)} – ${fim.slice(8)}/${fim.slice(5, 7)}`;
 
-  const mesHref = (n: number) => `/relatorio?modo=mes&mes=${n}&ano=${ano}`;
-  const mesActiveHref = `/relatorio?modo=mes&mes=${mes}&ano=${ano}`;
-  const diaActiveHref = `/relatorio?modo=dia&dia=${dia}`;
-  const periodoHref = `/relatorio?modo=periodo&inicio=${inicio}&fim=${fim}`;
+  const torreParam = filterTorre ? `&torre=${encodeURIComponent(filterTorre)}` : "";
+  const localParam = filterLocal ? `&local=${encodeURIComponent(filterLocal)}` : "";
+
+  const mesHref = (n: number) => `/relatorio?modo=mes&mes=${n}&ano=${ano}${torreParam}${localParam}`;
+  const mesActiveHref = `/relatorio?modo=mes&mes=${mes}&ano=${ano}${torreParam}${localParam}`;
+  const diaActiveHref = `/relatorio?modo=dia&dia=${dia}${torreParam}${localParam}`;
+  const periodoHref = `/relatorio?modo=periodo&inicio=${inicio}&fim=${fim}${torreParam}${localParam}`;
 
   return (
     <div className="p-6 space-y-6">
@@ -99,8 +111,8 @@ export default async function RelatorioPage(props: PageProps<"/relatorio">) {
         </a>
       </div>
 
-      {/* Filter row */}
-      {modo === "mes" ? (
+      {/* Mode selectors and Month Chips if mes */}
+      {modo === "mes" && (
         <div className="overflow-x-auto -mx-6 px-6">
           <div className="flex gap-2 w-max pb-1">
             {MESES_CURTOS.map((label, i) => {
@@ -121,11 +133,21 @@ export default async function RelatorioPage(props: PageProps<"/relatorio">) {
             })}
           </div>
         </div>
-      ) : modo === "dia" ? (
-        <form method="get">
-          <input type="hidden" name="modo" value="dia" />
-          <div className="flex gap-3 items-end">
-            <div className="flex-1 space-y-1">
+      )}
+
+      {/* Unified filters form */}
+      <form method="get" className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 space-y-4">
+        <input type="hidden" name="modo" value={modo} />
+        {modo === "mes" && (
+          <>
+            <input type="hidden" name="mes" value={mes} />
+            <input type="hidden" name="ano" value={ano} />
+          </>
+        )}
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-end">
+          {modo === "dia" && (
+            <div className="space-y-1 col-span-2 md:col-span-1">
               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">
                 Data
               </label>
@@ -139,188 +161,94 @@ export default async function RelatorioPage(props: PageProps<"/relatorio">) {
                 />
               </div>
             </div>
-            <button
-              type="submit"
-              className="px-5 py-2 bg-primary text-white text-xs font-bold rounded-xl mb-0.5"
+          )}
+
+          {modo === "periodo" && (
+            <>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">
+                  Início
+                </label>
+                <div className="bg-white border border-slate-100 rounded-xl px-3 py-2 flex items-center gap-2">
+                  <Calendar size={14} className="text-slate-400 shrink-0" />
+                  <input
+                    name="inicio"
+                    type="date"
+                    defaultValue={inicio}
+                    className="bg-transparent border-none text-xs w-full p-0 font-bold text-dark-navy outline-none"
+                  />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">
+                  Fim
+                </label>
+                <div className="bg-white border border-slate-100 rounded-xl px-3 py-2 flex items-center gap-2">
+                  <Calendar size={14} className="text-slate-400 shrink-0" />
+                  <input
+                    name="fim"
+                    type="date"
+                    defaultValue={fim}
+                    className="bg-transparent border-none text-xs w-full p-0 font-bold text-dark-navy outline-none"
+                  />
+                </div>
+              </div>
+            </>
+          )}
+
+          <div className="space-y-1 col-span-1">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">
+              Torre
+            </label>
+            <select
+              name="torre"
+              defaultValue={filterTorre || ""}
+              className="w-full bg-slate-50 border border-slate-100 rounded-xl px-3 py-2 text-xs font-bold text-dark-navy outline-none h-9"
             >
-              Ver
-            </button>
+              <option value="">Todas</option>
+              <option value="Torre A">Torre A</option>
+              <option value="Torre B">Torre B</option>
+            </select>
           </div>
-        </form>
-      ) : (
-        <form method="get" className="flex gap-4">
-          <input type="hidden" name="modo" value="periodo" />
-          <div className="flex-1 space-y-1">
+
+          <div className="space-y-1 col-span-1">
             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">
-              Início
+              Local
             </label>
-            <div className="bg-white border border-slate-100 rounded-xl px-3 py-2 flex items-center gap-2">
-              <Calendar size={14} className="text-slate-400 shrink-0" />
-              <input
-                name="inicio"
-                type="date"
-                defaultValue={inicio}
-                className="bg-transparent border-none text-xs w-full p-0 font-bold text-dark-navy outline-none"
-              />
-            </div>
+            <select
+              name="local"
+              defaultValue={filterLocal || ""}
+              className="w-full bg-slate-50 border border-slate-100 rounded-xl px-3 py-2 text-xs font-bold text-dark-navy outline-none h-9"
+            >
+              <option value="">Todos</option>
+              {LOCAIS.map((l) => (
+                <option key={l} value={l}>
+                  {l}
+                </option>
+              ))}
+            </select>
           </div>
-          <div className="flex-1 space-y-1">
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">
-              Fim
-            </label>
-            <div className="bg-white border border-slate-100 rounded-xl px-3 py-2 flex items-center gap-2">
-              <Calendar size={14} className="text-slate-400 shrink-0" />
-              <input
-                name="fim"
-                type="date"
-                defaultValue={fim}
-                className="bg-transparent border-none text-xs w-full p-0 font-bold text-dark-navy outline-none"
-              />
-            </div>
-          </div>
-          <div className="flex items-end">
+
+          <div className="col-span-2 md:col-span-1 flex items-end">
             <button
               type="submit"
-              className="px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl"
+              className="w-full py-2 bg-primary text-white text-xs font-bold rounded-xl shadow-md hover:bg-primary-dark transition-all h-9"
             >
               Filtrar
             </button>
           </div>
-        </form>
-      )}
+        </div>
+      </form>
 
-      {/* Faturamento hero */}
-      <div
-        className="rounded-2xl p-6 relative overflow-hidden"
-        style={{ background: "linear-gradient(135deg, #0b1e30 0%, #1b4f73 100%)" }}
-      >
-        <div className="relative z-10">
-          <p className="text-white/60 text-xs font-bold uppercase tracking-widest mb-1">
-            Faturamento — {labelPeriodo}
-          </p>
-          <h2 className="text-4xl font-black text-white">
-            {receitaTotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-          </h2>
-          <div className="flex items-center gap-2 mt-4 text-white/80">
-            <CheckCircle size={14} className="text-emerald-400" />
-            <span className="text-sm font-medium">{totalServicos} lavagens concluídas</span>
-          </div>
-        </div>
-      </div>
-
-      {/* KPI cards */}
-      <div className="flex gap-4">
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex-1 flex flex-col items-center">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-            Total Serv.
-          </span>
-          <span className="text-2xl font-black text-dark-navy">{totalServicos}</span>
-        </div>
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex-1 flex flex-col items-center">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-            Ticket Médio
-          </span>
-          <span className="text-xl font-black text-dark-navy">
-            {ticketMedio.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-          </span>
-        </div>
-      </div>
-
-      {/* Revenue split */}
-      <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 space-y-3">
-        <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-          Divisão de Receita
-        </h3>
-        <div className="flex items-center justify-between rounded-xl bg-primary/10 px-4 py-3">
-          <div>
-            <p className="text-xs font-medium text-primary/70">CEO (R$20/serviço)</p>
-            <p className="font-headline font-bold text-primary">
-              {parteCEO.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-            </p>
-          </div>
-          <span className="h-9 w-9 rounded-full bg-primary/20 flex items-center justify-center text-xs font-black text-primary">
-            CEO
-          </span>
-        </div>
-        <div className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3">
-          <div>
-            <p className="text-xs font-medium text-slate-400">Funcionários</p>
-            <p className="font-headline font-bold text-dark-navy">
-              {parteFuncionarios.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-            </p>
-          </div>
-          <span className="h-9 w-9 rounded-full bg-slate-200 flex items-center justify-center text-xs font-black text-slate-600">
-            Eq.
-          </span>
-        </div>
-        <div className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3">
-          <div>
-            <p className="text-xs font-medium text-slate-400">Ticket Médio</p>
-            <p className="font-headline font-bold text-dark-navy">
-              {ticketMedio.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Service table */}
-      <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-100">
-                <th className="px-4 py-3 font-bold text-dark-navy uppercase text-[11px]">Veículo</th>
-                <th className="px-4 py-3 font-bold text-dark-navy uppercase text-[11px]">Serviço</th>
-                <th className="px-4 py-3 font-bold text-dark-navy uppercase text-[11px] text-right">
-                  Valor
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {lista.length === 0 ? (
-                <tr>
-                  <td colSpan={3} className="px-4 py-6 text-sm text-slate-400 text-center">
-                    Nenhum serviço no período.
-                  </td>
-                </tr>
-              ) : (
-                lista.map((s, i) => (
-                  <tr key={s.id} className={i % 2 === 0 ? "bg-white" : "bg-slate-50/50"}>
-                    <td className="px-4 py-3 font-bold text-dark-navy font-mono tracking-wider">
-                      {s.placa}
-                    </td>
-                    <td className="px-4 py-3 text-slate-500">{s.tipo_lavagem}</td>
-                    <td className="px-4 py-3 text-right font-bold text-primary">
-                      {(s.valor ?? 0).toLocaleString("pt-BR", {
-                        style: "currency",
-                        currency: "BRL",
-                      })}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Export buttons */}
-      <div className="grid grid-cols-2 gap-4 pb-2">
-        <a
-          href={`/api/relatorio/csv?inicio=${inicio}&fim=${fim}`}
-          className="flex items-center justify-center gap-2 bg-slate-100 py-4 rounded-xl text-slate-600 font-bold hover:bg-slate-200 transition-all"
-        >
-          <Download size={18} />
-          <span>CSV</span>
-        </a>
-        <a
-          href={`/api/relatorio/pdf?inicio=${inicio}&fim=${fim}`}
-          className="flex items-center justify-center gap-2 bg-slate-100 py-4 rounded-xl text-slate-600 font-bold hover:bg-slate-200 transition-all"
-        >
-          <FileText size={18} />
-          <span>PDF</span>
-        </a>
-      </div>
+      {/* RelatorioClient handles search and re-computations of aggregates */}
+      <RelatorioClient
+        initialServicos={lista}
+        inicio={inicio}
+        fim={fim}
+        labelPeriodo={labelPeriodo}
+        torreParam={torreParam}
+        localParam={localParam}
+      />
     </div>
   );
 }

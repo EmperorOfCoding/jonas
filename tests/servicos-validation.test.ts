@@ -8,17 +8,17 @@ import {
 
 test("normalizes service input for persistence", () => {
   const normalized = normalizeServicoInput({
-    placa: "2201 byd",
+    placa: "BYD 2201",
     tipo_lavagem: " Completo ",
-    andar: " 3o ",
+    andar: " Torre A ",
     local: " Garagem ",
     funcionario: " Maria ",
     data_hora: "2026-05-14T10:30",
-    forma_pagamento: " Pix ",
+    forma_pagamento: " Mensal ",
     valor: "40,50",
   });
 
-  assert.equal(normalized.placa, "2201 BYD");
+  assert.equal(normalized.placa, "BYD 2201");
   assert.equal(normalized.tipo_lavagem, "Completo");
   assert.equal(normalized.valor, 40.5);
   assert.equal(normalized.data_hora, new Date("2026-05-14T10:30").toISOString());

@@ -67,7 +67,22 @@ export async function GET(request: NextRequest) {
       request.nextUrl.searchParams.get("inicio"),
       request.nextUrl.searchParams.get("fim")
     );
-    const lista = await listServicos({ from, to });
+    const filterTorre = request.nextUrl.searchParams.get("torre");
+    const filterLocal = request.nextUrl.searchParams.get("local");
+    const query = request.nextUrl.searchParams.get("q");
+
+    let lista = await listServicos({ from, to });
+    if (filterTorre) {
+      lista = lista.filter((s) => s.andar === filterTorre);
+    }
+    if (filterLocal) {
+      lista = lista.filter((s) => s.local === filterLocal);
+    }
+    if (query) {
+      const q = query.trim().toUpperCase();
+      lista = lista.filter((s) => s.placa.toUpperCase().includes(q));
+    }
+
     const resumo = summarizeServicos(lista);
     const printableRows = lista.slice(0, 30);
     const truncated = lista.length > printableRows.length;
@@ -84,7 +99,7 @@ export async function GET(request: NextRequest) {
       "Servicos",
       ...printableRows.map((servico) => {
         const data = new Date(servico.data_hora).toLocaleDateString("pt-BR");
-        return `${data} | ${servico.placa} | ${servico.funcionario} | func. ${formatMoney(getParteFuncionario(servico.valor))}`;
+        return `${data} | ${servico.placa} | ${servico.andar} | ${servico.local} | ${servico.funcionario} | func. ${formatMoney(getParteFuncionario(servico.valor))}`;
       }),
       truncated ? `Mais ${lista.length - printableRows.length} servicos no CSV completo.` : "",
     ].filter(Boolean);
