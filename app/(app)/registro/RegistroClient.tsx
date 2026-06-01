@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { MapPin, DollarSign, CheckCircle, AlertCircle } from "lucide-react";
-import { registrarServico } from "./actions";
+import { registrarServico, carregarResumoRegistro } from "./actions";
 import { ANDARES, FUNCIONARIOS, LOCAIS, PRECO_POR_TIPO, TIPOS_LAVAGEM } from "../servico-options";
 
 function nowLocalISO() {
@@ -35,11 +35,11 @@ function Chip({
   );
 }
 
-export default function RegistroClient({ initialCarrosHoje }: { initialCarrosHoje: number | null }) {
+export default function RegistroClient() {
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [carrosHoje, setCarrosHoje] = useState<number | null>(initialCarrosHoje);
+  const [carrosHoje, setCarrosHoje] = useState<number | null>(null);
 
   const [apartamento, setApartamento] = useState("");
   const [nomeVeiculo, setNomeVeiculo] = useState("");
@@ -54,6 +54,13 @@ export default function RegistroClient({ initialCarrosHoje }: { initialCarrosHoj
   useEffect(() => {
     // Avoid hydration mismatch for date by setting it on mount
     setDataHora(nowLocalISO());
+
+    // Fetch initial count em background (não bloqueia a tela)
+    carregarResumoRegistro().then((result) => {
+      if (result.ok) {
+        setCarrosHoje(result.carrosHoje);
+      }
+    });
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
