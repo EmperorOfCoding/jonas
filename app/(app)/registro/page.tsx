@@ -106,7 +106,8 @@ export default function RegistroPage() {
   function toggleFuncionario(f: string) {
     setFuncionarios((prev) => {
       if (prev.includes(f)) return prev.filter((x) => x !== f);
-      if (prev.length >= 4) return prev;
+      const limit = tipo === "Externo" ? 2 : 4;
+      if (prev.length >= limit) return prev;
       return [...prev, f];
     });
   }
@@ -114,6 +115,9 @@ export default function RegistroPage() {
   function handleTipoChange(nextTipo: (typeof TIPOS_LAVAGEM)[number]) {
     setTipo(nextTipo);
     setValor(PRECO_POR_TIPO[nextTipo]);
+    if (nextTipo === "Externo" && funcionarios.length > 2) {
+      setFuncionarios((prev) => prev.slice(0, 2));
+    }
   }
 
   return (
@@ -213,7 +217,9 @@ export default function RegistroPage() {
           <div className="space-y-2">
             <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">
               Funcionário{" "}
-              <span className="normal-case font-normal text-slate-300">(máx. 4)</span>
+              <span className="normal-case font-normal text-slate-300">
+                (máx. {tipo === "Externo" ? "2" : "4"})
+              </span>
             </label>
             <div className="flex flex-wrap gap-2">
               {FUNCIONARIOS.map((f) => (

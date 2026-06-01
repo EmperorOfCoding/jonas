@@ -25,6 +25,9 @@ export async function GET(request: NextRequest) {
     );
     const filterTorre = request.nextUrl.searchParams.get("torre");
     const filterLocal = request.nextUrl.searchParams.get("local");
+    const filterServico = request.nextUrl.searchParams.get("servico");
+    const filterAndarApto = request.nextUrl.searchParams.get("andarApto");
+    const filterEquipe = request.nextUrl.searchParams.getAll("equipe");
     const query = request.nextUrl.searchParams.get("q");
 
     let lista = await listServicos({ from, to });
@@ -33,6 +36,19 @@ export async function GET(request: NextRequest) {
     }
     if (filterLocal) {
       lista = lista.filter((s) => s.local === filterLocal);
+    }
+    if (filterServico) {
+      lista = lista.filter((s) => s.tipo_lavagem?.toLowerCase() === filterServico.toLowerCase());
+    }
+    if (filterAndarApto) {
+      lista = lista.filter((s) => s.placa?.toLowerCase().includes(filterAndarApto.toLowerCase()));
+    }
+    if (filterEquipe.length > 0) {
+      lista = lista.filter((s) => {
+        if (!s.funcionario) return false;
+        const funcsStr = s.funcionario.split(",").map((f) => f.trim().toLowerCase());
+        return filterEquipe.some(e => funcsStr.includes(e.toLowerCase()));
+      });
     }
     if (query) {
       const q = query.trim().toUpperCase();

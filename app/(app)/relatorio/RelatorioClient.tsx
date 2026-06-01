@@ -12,6 +12,9 @@ interface RelatorioClientProps {
   labelPeriodo: string;
   torreParam: string;
   localParam: string;
+  servicoParam: string;
+  andarParam?: string;
+  equipeParamStr?: string;
 }
 
 export default function RelatorioClient({
@@ -21,6 +24,9 @@ export default function RelatorioClient({
   labelPeriodo,
   torreParam,
   localParam,
+  servicoParam,
+  andarParam,
+  equipeParamStr = "",
 }: RelatorioClientProps) {
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -41,7 +47,12 @@ export default function RelatorioClient({
     })).sort((a, b) => b.receita - a.receita);
   }, [funcionariosRanking]);
 
-  const searchParam = searchQuery ? `&q=${encodeURIComponent(searchQuery)}` : "";
+  const exportCsvHref = `/api/relatorio/csv?inicio=${inicio}&fim=${fim}${torreParam}${localParam}${servicoParam}${andarParam || ""}${equipeParamStr}${
+    searchQuery ? `&q=${encodeURIComponent(searchQuery)}` : ""
+  }`;
+  const exportPdfHref = `/api/relatorio/pdf?inicio=${inicio}&fim=${fim}${torreParam}${localParam}${servicoParam}${andarParam || ""}${equipeParamStr}${
+    searchQuery ? `&q=${encodeURIComponent(searchQuery)}` : ""
+  }`;
 
   return (
     <div className="space-y-6">
@@ -159,6 +170,7 @@ export default function RelatorioClient({
                 <th className="px-4 py-3 font-bold text-dark-navy uppercase text-[11px]">Serviço</th>
                 <th className="px-4 py-3 font-bold text-dark-navy uppercase text-[11px]">Torre</th>
                 <th className="px-4 py-3 font-bold text-dark-navy uppercase text-[11px]">Local</th>
+                <th className="px-4 py-3 font-bold text-dark-navy uppercase text-[11px]">Equipe</th>
                 <th className="px-4 py-3 font-bold text-dark-navy uppercase text-[11px] text-right">
                   Valor
                 </th>
@@ -167,7 +179,7 @@ export default function RelatorioClient({
             <tbody className="divide-y divide-slate-50">
               {filteredServicos.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-sm text-slate-400 text-center">
+                  <td colSpan={6} className="px-4 py-6 text-sm text-slate-400 text-center">
                     Nenhum serviço correspondente.
                   </td>
                 </tr>
@@ -180,6 +192,19 @@ export default function RelatorioClient({
                     <td className="px-4 py-3 text-slate-500">{s.tipo_lavagem}</td>
                     <td className="px-4 py-3 text-slate-500 font-semibold">{s.andar}</td>
                     <td className="px-4 py-3 text-slate-500">{s.local}</td>
+                    <td className="px-4 py-3">
+                      {s.funcionario ? (
+                        <div className="flex flex-wrap gap-1">
+                          {s.funcionario.split(",").map((name) => (
+                            <span key={name} className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider">
+                              {name.trim()}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-slate-400 text-xs">-</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-right font-bold text-primary">
                       {(s.valor ?? 0).toLocaleString("pt-BR", {
                         style: "currency",
@@ -197,18 +222,19 @@ export default function RelatorioClient({
       {/* Export buttons */}
       <div className="grid grid-cols-2 gap-4 pb-2">
         <a
-          href={`/api/relatorio/csv?inicio=${inicio}&fim=${fim}${torreParam}${localParam}${searchParam}`}
+          href={exportCsvHref}
           className="flex items-center justify-center gap-2 bg-slate-100 py-4 rounded-xl text-slate-600 font-bold hover:bg-slate-200 transition-all"
         >
           <Download size={18} />
           <span>CSV</span>
         </a>
         <a
-          href={`/api/relatorio/pdf?inicio=${inicio}&fim=${fim}${torreParam}${localParam}${searchParam}`}
+          href={exportPdfHref}
+          target="_blank"
           className="flex items-center justify-center gap-2 bg-slate-100 py-4 rounded-xl text-slate-600 font-bold hover:bg-slate-200 transition-all"
         >
           <FileText size={18} />
-          <span>PDF</span>
+          <span>Exportar PDF</span>
         </a>
       </div>
     </div>

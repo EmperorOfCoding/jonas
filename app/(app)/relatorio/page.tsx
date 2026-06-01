@@ -1,6 +1,6 @@
 import { Calendar } from "lucide-react";
 import { listServicos, parseMesRange, parseReportRange } from "@/lib/services/servicos";
-import { LOCAIS } from "../servico-options";
+import { LOCAIS, FUNCIONARIOS } from "../servico-options";
 import RelatorioClient from "./RelatorioClient";
 
 const MESES = [
@@ -46,6 +46,10 @@ export default async function RelatorioPage(props: PageProps<"/relatorio">) {
 
   const filterTorre = searchParams?.torre as string | undefined;
   const filterLocal = searchParams?.local as string | undefined;
+  const filterServico = searchParams?.servico as string | undefined;
+  const filterAndar = searchParams?.andarApto as string | undefined;
+  const equipeParamRaw = searchParams?.equipe;
+  const filterEquipe = Array.isArray(equipeParamRaw) ? equipeParamRaw : (equipeParamRaw ? [equipeParamRaw] : []);
 
   let lista = await listServicos({ from, to });
   if (filterTorre) {
@@ -53,6 +57,19 @@ export default async function RelatorioPage(props: PageProps<"/relatorio">) {
   }
   if (filterLocal) {
     lista = lista.filter((s) => s.local === filterLocal);
+  }
+  if (filterServico) {
+    lista = lista.filter((s) => s.tipo_lavagem?.toLowerCase() === filterServico.toLowerCase());
+  }
+  if (filterAndar) {
+    lista = lista.filter((s) => s.placa?.toLowerCase().includes(filterAndar.toLowerCase()));
+  }
+  if (filterEquipe.length > 0) {
+    lista = lista.filter((s) => {
+      if (!s.funcionario) return false;
+      const funcsStr = s.funcionario.split(",").map((f) => f.trim().toLowerCase());
+      return filterEquipe.some(e => funcsStr.includes(e.toLowerCase()));
+    });
   }
 
   const labelPeriodo =
@@ -64,11 +81,14 @@ export default async function RelatorioPage(props: PageProps<"/relatorio">) {
 
   const torreParam = filterTorre ? `&torre=${encodeURIComponent(filterTorre)}` : "";
   const localParam = filterLocal ? `&local=${encodeURIComponent(filterLocal)}` : "";
+  const servicoParam = filterServico ? `&servico=${encodeURIComponent(filterServico)}` : "";
+  const andarParam = filterAndar ? `&andarApto=${encodeURIComponent(filterAndar)}` : "";
+  const equipeParamStr = filterEquipe.map(e => `&equipe=${encodeURIComponent(e)}`).join("");
 
-  const mesHref = (n: number) => `/relatorio?modo=mes&mes=${n}&ano=${ano}${torreParam}${localParam}`;
-  const mesActiveHref = `/relatorio?modo=mes&mes=${mes}&ano=${ano}${torreParam}${localParam}`;
-  const diaActiveHref = `/relatorio?modo=dia&dia=${dia}${torreParam}${localParam}`;
-  const periodoHref = `/relatorio?modo=periodo&inicio=${inicio}&fim=${fim}${torreParam}${localParam}`;
+  const mesHref = (n: number) => `/relatorio?modo=mes&mes=${n}&ano=${ano}${torreParam}${localParam}${servicoParam}${andarParam}${equipeParamStr}`;
+  const mesActiveHref = `/relatorio?modo=mes&mes=${mes}&ano=${ano}${torreParam}${localParam}${servicoParam}${andarParam}${equipeParamStr}`;
+  const diaActiveHref = `/relatorio?modo=dia&dia=${dia}${torreParam}${localParam}${servicoParam}${andarParam}${equipeParamStr}`;
+  const periodoHref = `/relatorio?modo=periodo&inicio=${inicio}&fim=${fim}${torreParam}${localParam}${servicoParam}${andarParam}${equipeParamStr}`;
 
   return (
     <div className="p-6 space-y-6">
@@ -145,9 +165,9 @@ export default async function RelatorioPage(props: PageProps<"/relatorio">) {
           </>
         )}
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-end">
+        <div className="flex flex-wrap gap-4 items-end">
           {modo === "dia" && (
-            <div className="space-y-1 col-span-2 md:col-span-1">
+            <div className="space-y-1 w-full sm:w-[calc(50%-8px)] lg:w-auto lg:flex-1">
               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">
                 Data
               </label>
@@ -165,7 +185,7 @@ export default async function RelatorioPage(props: PageProps<"/relatorio">) {
 
           {modo === "periodo" && (
             <>
-              <div className="space-y-1">
+              <div className="space-y-1 w-full sm:w-[calc(50%-8px)] lg:w-auto lg:flex-1">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">
                   Início
                 </label>
@@ -179,7 +199,7 @@ export default async function RelatorioPage(props: PageProps<"/relatorio">) {
                   />
                 </div>
               </div>
-              <div className="space-y-1">
+              <div className="space-y-1 w-full sm:w-[calc(50%-8px)] lg:w-auto lg:flex-1">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">
                   Fim
                 </label>
@@ -196,7 +216,20 @@ export default async function RelatorioPage(props: PageProps<"/relatorio">) {
             </>
           )}
 
-          <div className="space-y-1 col-span-1">
+          <div className="space-y-1 w-full sm:w-[calc(50%-8px)] lg:w-auto lg:flex-1">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">
+              Andar (Apto)
+            </label>
+            <input
+              type="text"
+              name="andarApto"
+              defaultValue={filterAndar || ""}
+              placeholder="Ex: 2201"
+              className="w-full bg-slate-50 border border-slate-100 rounded-xl px-3 py-2 text-xs font-bold text-dark-navy outline-none h-9 placeholder:text-slate-300"
+            />
+          </div>
+
+          <div className="space-y-1 w-full sm:w-[calc(50%-8px)] lg:w-auto lg:flex-1">
             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">
               Torre
             </label>
@@ -211,7 +244,7 @@ export default async function RelatorioPage(props: PageProps<"/relatorio">) {
             </select>
           </div>
 
-          <div className="space-y-1 col-span-1">
+          <div className="space-y-1 w-full sm:w-[calc(50%-8px)] lg:w-auto lg:flex-1">
             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">
               Local
             </label>
@@ -229,10 +262,50 @@ export default async function RelatorioPage(props: PageProps<"/relatorio">) {
             </select>
           </div>
 
-          <div className="col-span-2 md:col-span-1 flex items-end">
+          <div className="space-y-1 w-full sm:w-[calc(50%-8px)] lg:w-auto lg:flex-1">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">
+              Serviço
+            </label>
+            <select
+              name="servico"
+              defaultValue={filterServico || ""}
+              className="w-full bg-slate-50 border border-slate-100 rounded-xl px-3 py-2 text-xs font-bold text-dark-navy outline-none h-9"
+            >
+              <option value="">Todos</option>
+              <option value="Completo">Completo</option>
+              <option value="Externo">Externo</option>
+            </select>
+          </div>
+
+          <div className="space-y-2 w-full">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">
+              Equipe
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {FUNCIONARIOS.map((f) => {
+                const isSelected = filterEquipe.includes(f);
+                return (
+                  <label key={f} className="cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      name="equipe"
+                      value={f}
+                      defaultChecked={isSelected}
+                      className="peer sr-only"
+                    />
+                    <div className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-[11px] font-bold text-slate-500 peer-checked:bg-primary peer-checked:text-white peer-checked:border-primary peer-checked:shadow-md transition-all">
+                      {f}
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="w-full sm:w-[calc(50%-8px)] lg:w-auto lg:flex-none flex items-end">
             <button
               type="submit"
-              className="w-full py-2 bg-primary text-white text-xs font-bold rounded-xl shadow-md hover:bg-primary-dark transition-all h-9"
+              className="w-full lg:w-24 py-2 bg-primary text-white text-xs font-bold rounded-xl shadow-md hover:bg-primary-dark transition-all h-9"
             >
               Filtrar
             </button>
@@ -240,7 +313,6 @@ export default async function RelatorioPage(props: PageProps<"/relatorio">) {
         </div>
       </form>
 
-      {/* RelatorioClient handles search and re-computations of aggregates */}
       <RelatorioClient
         initialServicos={lista}
         inicio={inicio}
@@ -248,6 +320,9 @@ export default async function RelatorioPage(props: PageProps<"/relatorio">) {
         labelPeriodo={labelPeriodo}
         torreParam={torreParam}
         localParam={localParam}
+        servicoParam={servicoParam}
+        andarParam={andarParam}
+        equipeParamStr={equipeParamStr}
       />
     </div>
   );
