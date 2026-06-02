@@ -190,6 +190,19 @@ export default function LoginPage() {
             </div>
           </form>
         </div>
+
+        {/* Vexaris credit */}
+        <p className="pb-5 text-center text-[11px] tracking-wide text-white/35">
+          Criação de Sistema por{" "}
+          <a
+            href="https://vexaris.com.br"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-semibold text-white/55 transition-colors hover:text-white/80"
+          >
+            Vexaris
+          </a>
+        </p>
       </div>
     </>
   );
