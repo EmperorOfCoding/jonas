@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
     const filterAndarApto = request.nextUrl.searchParams.get("andarApto");
     const filterEquipe = request.nextUrl.searchParams.getAll("equipe");
     const query = request.nextUrl.searchParams.get("q");
+    const isCliente = request.nextUrl.searchParams.get("tipo") === "cliente";
 
     let lista = await listServicos({ from, to });
     if (filterTorre) {
@@ -171,7 +172,7 @@ export async function GET(request: NextRequest) {
     /* Summary Grid */
     .summary-grid {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
+      grid-template-columns: repeat(${isCliente ? 3 : 5}, minmax(0, 1fr));
       background: #f8fafc;
       border: 1px solid #e2e8f0;
       border-radius: 12px;
@@ -179,7 +180,7 @@ export async function GET(request: NextRequest) {
       margin-bottom: 40px;
     }
     .summary-item {
-      padding: 20px;
+      padding: 16px 10px;
       border-right: 1px solid #e2e8f0;
     }
     .summary-item:last-child {
@@ -189,21 +190,25 @@ export async function GET(request: NextRequest) {
       background: #eff6ff;
     }
     .summary-label {
-      font-size: 10px;
+      font-size: 9px;
       text-transform: uppercase;
       letter-spacing: 0.05em;
       color: #64748b;
       font-weight: 700;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .summary-item.highlight .summary-label {
       color: #2563eb;
     }
     .summary-value {
-      font-size: 20px;
+      font-size: 15px;
       font-weight: 800;
       color: #0f172a;
       letter-spacing: -0.02em;
+      white-space: nowrap;
     }
     .summary-item.highlight .summary-value {
       color: #1d4ed8;
@@ -295,14 +300,15 @@ export async function GET(request: NextRequest) {
         <div class="summary-label">Serviços</div>
         <div class="summary-value">${resumo.totalServicos}</div>
       </div>
-      <div class="summary-item highlight">
-        <div class="summary-label">Receita Total</div>
-        <div class="summary-value">${formatMoney(resumo.receitaTotal)}</div>
-      </div>
-      <div class="summary-item">
+      <div class="summary-item ${isCliente ? 'highlight' : ''}">
         <div class="summary-label">Ticket Médio</div>
         <div class="summary-value">${formatMoney(resumo.ticketMedio)}</div>
       </div>
+      <div class="summary-item ${!isCliente ? 'highlight' : ''}">
+        <div class="summary-label">Receita Total</div>
+        <div class="summary-value">${formatMoney(resumo.receitaTotal)}</div>
+      </div>
+      ${!isCliente ? `
       <div class="summary-item">
         <div class="summary-label">Parte Empresa</div>
         <div class="summary-value">${formatMoney(resumo.parteCEO)}</div>
@@ -311,6 +317,7 @@ export async function GET(request: NextRequest) {
         <div class="summary-label">Funcionários</div>
         <div class="summary-value">${formatMoney(resumo.parteFuncionarios)}</div>
       </div>
+      ` : ''}
     </div>
 
     <table>
@@ -321,7 +328,7 @@ export async function GET(request: NextRequest) {
           <th>Serviço</th>
           <th>Localização</th>
           <th>Equipe</th>
-          <th class="text-right">Val. Func.</th>
+          <th class="text-right">${isCliente ? 'Valor' : 'Val. Func.'}</th>
         </tr>
       </thead>
       <tbody>
@@ -335,7 +342,7 @@ export async function GET(request: NextRequest) {
               <td>${s.tipo_lavagem || "Completo"}</td>
               <td>${localString}</td>
               <td class="cell-equipe">${s.funcionario || "-"}</td>
-              <td class="text-right cell-valor">${formatMoney(getParteFuncionario(s.valor))}</td>
+              <td class="text-right cell-valor">${formatMoney(isCliente ? s.valor : getParteFuncionario(s.valor))}</td>
             </tr>
           `;
         }).join('')}

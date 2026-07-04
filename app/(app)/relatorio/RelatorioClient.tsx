@@ -53,6 +53,7 @@ export default function RelatorioClient({
   const exportPdfHref = `/api/relatorio/pdf?inicio=${inicio}&fim=${fim}${torreParam}${localParam}${servicoParam}${andarParam || ""}${equipeParamStr}${
     searchQuery ? `&q=${encodeURIComponent(searchQuery)}` : ""
   }`;
+  const exportPdfClienteHref = `${exportPdfHref}&tipo=cliente`;
 
   return (
     <div className="space-y-6">
@@ -220,7 +221,7 @@ export default function RelatorioClient({
       </div>
 
       {/* Export buttons */}
-      <div className="grid grid-cols-2 gap-4 pb-2">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pb-2">
         <a
           href={exportCsvHref}
           className="flex items-center justify-center gap-2 bg-slate-100 py-4 rounded-xl text-slate-600 font-bold hover:bg-slate-200 transition-all"
@@ -234,7 +235,15 @@ export default function RelatorioClient({
           className="flex items-center justify-center gap-2 bg-slate-100 py-4 rounded-xl text-slate-600 font-bold hover:bg-slate-200 transition-all"
         >
           <FileText size={18} />
-          <span>Exportar PDF</span>
+          <span>Exportar PDF / Empresa</span>
+        </a>
+        <a
+          href={exportPdfClienteHref}
+          target="_blank"
+          className="flex items-center justify-center gap-2 bg-primary/10 py-4 rounded-xl text-primary font-bold hover:bg-primary/20 transition-all"
+        >
+          <FileText size={18} />
+          <span>Exportar PDF / Clientes</span>
         </a>
       </div>
     </div>
