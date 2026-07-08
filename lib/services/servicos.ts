@@ -68,7 +68,7 @@ async function getAuthenticatedSupabase() {
 
 export async function listServicos(params: { from?: string; to?: string; limit?: number } = {}) {
   const supabase = await getAuthenticatedSupabase();
-  let query = supabase.from("servicos").select("*").order("data_hora", { ascending: false });
+  let query = supabase.from("servicos").select("*").order("id", { ascending: false });
 
   if (params.from) {
     query = query.gte("data_hora", params.from);

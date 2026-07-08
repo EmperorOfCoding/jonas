@@ -5,10 +5,10 @@ import { MapPin, DollarSign, CheckCircle, AlertCircle } from "lucide-react";
 import { registrarServico, carregarResumoRegistro } from "./actions";
 import { ANDARES, FUNCIONARIOS, LOCAIS, PRECO_POR_TIPO, TIPOS_LAVAGEM } from "../servico-options";
 
-function nowLocalISO() {
+function todayLocalISO() {
   const d = new Date();
   d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-  return d.toISOString().slice(0, 16);
+  return d.toISOString().slice(0, 10);
 }
 
 function Chip({
@@ -53,7 +53,7 @@ export default function RegistroClient() {
 
   useEffect(() => {
     // Avoid hydration mismatch for date by setting it on mount
-    setDataHora(nowLocalISO());
+    setDataHora(todayLocalISO());
 
     // Fetch initial count em background (não bloqueia a tela)
     carregarResumoRegistro().then((result) => {
@@ -100,7 +100,7 @@ export default function RegistroClient() {
     setAndar("");
     setLocal("");
     setFuncionarios([]);
-    setDataHora(nowLocalISO());
+    setDataHora(todayLocalISO());
     setPagamento("Mensal");
     setValor("");
   }
@@ -141,6 +141,26 @@ export default function RegistroClient() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-5">
+        {/* Valor */}
+        <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 space-y-2">
+          <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">
+            Valor do Serviço
+          </label>
+          <div className="relative">
+            <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-primary w-6 h-6" />
+            <input
+              required
+              type="number"
+              min="0"
+              step="0.01"
+              value={valor}
+              onChange={(e) => setValor(e.target.value)}
+              placeholder="0,00"
+              className="w-full pl-12 pr-4 py-6 bg-slate-50 border border-slate-100 rounded-2xl text-3xl font-black text-dark-navy outline-none focus:ring-2 focus:ring-primary transition-all"
+            />
+          </div>
+        </div>
+
         {/* Identificação + tipo */}
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 space-y-4">
           <div className="space-y-2">
@@ -184,21 +204,10 @@ export default function RegistroClient() {
             <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">
               Torre
             </label>
-            <div className="relative">
-              <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-              <select
-                required
-                value={andar}
-                onChange={(e) => setAndar(e.target.value)}
-                className="w-full pl-10 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-dark-navy font-bold outline-none focus:ring-2 focus:ring-primary transition-all appearance-none"
-              >
-                <option value="">Selecionar torre</option>
-                {ANDARES.map((a) => (
-                  <option key={a} value={a}>
-                    {a}
-                  </option>
-                ))}
-              </select>
+            <div className="flex flex-wrap gap-2">
+              {ANDARES.map((a) => (
+                <Chip key={a} label={a} active={andar === a} onClick={() => setAndar(a)} />
+              ))}
             </div>
           </div>
 
@@ -237,10 +246,10 @@ export default function RegistroClient() {
 
           <div className="space-y-2">
             <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">
-              Data e Hora
+              Data
             </label>
             <input
-              type="datetime-local"
+              type="date"
               value={dataHora}
               onChange={(e) => setDataHora(e.target.value)}
               className="w-full px-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-dark-navy font-bold outline-none focus:ring-2 focus:ring-primary transition-all"
@@ -248,25 +257,7 @@ export default function RegistroClient() {
           </div>
         </div>
 
-        {/* Valor */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 space-y-2">
-          <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">
-            Valor do Serviço
-          </label>
-          <div className="relative">
-            <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-primary w-6 h-6" />
-            <input
-              required
-              type="number"
-              min="0"
-              step="0.01"
-              value={valor}
-              onChange={(e) => setValor(e.target.value)}
-              placeholder="0,00"
-              className="w-full pl-12 pr-4 py-6 bg-slate-50 border border-slate-100 rounded-2xl text-3xl font-black text-dark-navy outline-none focus:ring-2 focus:ring-primary transition-all"
-            />
-          </div>
-        </div>
+
 
         {error && (
           <div className="flex items-start gap-2.5 rounded-2xl bg-red-50 px-4 py-3">

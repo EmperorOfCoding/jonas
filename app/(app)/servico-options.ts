@@ -1,8 +1,9 @@
-export const TIPOS_LAVAGEM = ["Completo", "Externo"] as const;
+export const TIPOS_LAVAGEM = ["Completo G", "Completo P", "Externo"] as const;
 
 export const PRECO_POR_TIPO: Record<(typeof TIPOS_LAVAGEM)[number], string> = {
-  Completo: "40",
-  Externo: "30",
+  "Completo G": "40",
+  "Completo P": "35",
+  Externo: "35",
 };
 
 export const LOCAIS = ["Horto", "Vale do Loire", "Barra", "Barcelona"] as const;

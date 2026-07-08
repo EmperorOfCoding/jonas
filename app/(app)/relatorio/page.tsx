@@ -272,7 +272,8 @@ export default async function RelatorioPage(props: PageProps<"/relatorio">) {
               className="w-full bg-slate-50 border border-slate-100 rounded-xl px-3 py-2 text-xs font-bold text-dark-navy outline-none h-9"
             >
               <option value="">Todos</option>
-              <option value="Completo">Completo</option>
+              <option value="Completo G">Completo G</option>
+              <option value="Completo P">Completo P</option>
               <option value="Externo">Externo</option>
             </select>
           </div>
