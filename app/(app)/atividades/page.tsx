@@ -1,10 +1,25 @@
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
-import { listServicos } from "@/lib/services/servicos";
+import { countServicos, listServicos } from "@/lib/services/servicos";
 import { AtividadesClient } from "./AtividadesClient";
 
-export default async function AtividadesPage() {
-  const lista = await listServicos({ limit: 100 });
+export default async function AtividadesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; page?: string }>;
+}) {
+  const resolvedParams = await searchParams;
+  const query = resolvedParams.q ?? "";
+  const page = parseInt(resolvedParams.page ?? "1", 10) || 1;
+  const limit = 50;
+  const offset = (page - 1) * limit;
+
+  const [lista, total] = await Promise.all([
+    listServicos({ q: query, limit, offset }),
+    countServicos({ q: query }),
+  ]);
+
+  const totalPages = Math.ceil(total / limit);
 
   return (
     <div className="p-6 space-y-5">
@@ -22,7 +37,12 @@ export default async function AtividadesPage() {
         </div>
       </div>
 
-      <AtividadesClient initialServicos={lista} />
+      <AtividadesClient
+        initialServicos={lista}
+        initialSearch={query}
+        currentPage={page}
+        totalPages={totalPages}
+      />
     </div>
   );
 }

@@ -9,11 +9,14 @@ import {
   ServicosError,
 } from "@/lib/services/servicos";
 
+
 export async function carregarResumoRegistro() {
   try {
     const carrosHoje = await countServicos({ from: periodoStart("hoje") });
     return { ok: true as const, carrosHoje };
   } catch (error) {
+    if (error instanceof Error && error.message === "NEXT_REDIRECT") throw error;
+
     if (error instanceof ServicosError) {
       return { ok: false as const, message: error.message };
     }
@@ -31,6 +34,8 @@ export async function registrarServico(input: CreateServicoInput) {
     revalidatePath("/relatorio");
     return { ok: true as const };
   } catch (error) {
+    if (error instanceof Error && error.message === "NEXT_REDIRECT") throw error;
+
     if (error instanceof ServicosError) {
       return { ok: false as const, message: error.message };
     }

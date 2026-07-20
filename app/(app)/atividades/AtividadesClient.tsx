@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { Car, ChevronDown } from "lucide-react";
+import { useState, useTransition, useEffect } from "react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { Car, ChevronDown, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import type { Servico, UpdateServicoInput } from "@/lib/services/servicos";
 import { ANDARES, FUNCIONARIOS, LOCAIS, TIPOS_LAVAGEM } from "../servico-options";
 import { atualizarServico, excluirServico } from "./actions";
@@ -63,6 +64,10 @@ function ServiceItem({
           </span>
           <span className="text-[10px] uppercase font-bold text-slate-300 tracking-wider flex items-center gap-1">
             <span suppressHydrationWarning>
+              {new Date(servico.data_hora).toLocaleDateString("pt-BR", {
+                day: "2-digit",
+                month: "2-digit",
+              })}{" "}
               {new Date(servico.data_hora).toLocaleTimeString("pt-BR", {
                 hour: "2-digit",
                 minute: "2-digit",
@@ -260,12 +265,51 @@ function EditItem({
   );
 }
 
-export function AtividadesClient({ initialServicos }: { initialServicos: Servico[] }) {
+export function AtividadesClient({ 
+  initialServicos, 
+  initialSearch, 
+  currentPage, 
+  totalPages 
+}: { 
+  initialServicos: Servico[],
+  initialSearch: string,
+  currentPage: number,
+  totalPages: number
+}) {
+  const router = useRouter();
+  const pathname = usePathname();
+  
   const [servicos, setServicos] = useState(initialServicos);
+  const [search, setSearch] = useState(initialSearch);
   const [editingId, setEditingId] = useState<string | number | null>(null);
   const [form, setForm] = useState<UpdateServicoInput | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+
+  // Sync state when props change (server component updates)
+  useEffect(() => {
+    setServicos(initialServicos);
+  }, [initialServicos]);
+
+  // Handle Debounced Search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (search !== initialSearch) {
+        const params = new URLSearchParams();
+        if (search) params.set("q", search);
+        router.push(`${pathname}?${params.toString()}`);
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [search, initialSearch, pathname, router]);
+
+  function changePage(newPage: number) {
+    const params = new URLSearchParams();
+    if (search) params.set("q", search);
+    params.set("page", newPage.toString());
+    router.push(`${pathname}?${params.toString()}`);
+  }
 
   function startEdit(servico: Servico) {
     setMessage(null);
@@ -325,7 +369,18 @@ export function AtividadesClient({ initialServicos }: { initialServicos: Servico
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 pb-8">
+      <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex items-center gap-3">
+        <Search className="text-slate-400 w-5 h-5 shrink-0" />
+        <input
+          type="text"
+          placeholder="Buscar por modelo ou placa..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="flex-1 outline-none text-dark-navy text-sm font-semibold placeholder:font-normal bg-transparent"
+        />
+      </div>
+
       {message && (
         <div className="rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-dark-navy border border-slate-100 shadow-sm">
           {message}
@@ -334,7 +389,7 @@ export function AtividadesClient({ initialServicos }: { initialServicos: Servico
 
       {servicos.length === 0 ? (
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
-          <p className="text-sm text-slate-400">Nenhum serviço registrado.</p>
+          <p className="text-sm text-slate-400">Nenhum serviço encontrado.</p>
         </div>
       ) : (
         servicos.map((servico) => {
@@ -365,6 +420,32 @@ export function AtividadesClient({ initialServicos }: { initialServicos: Servico
             />
           );
         })
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between pt-4">
+          <button
+            onClick={() => changePage(currentPage - 1)}
+            disabled={currentPage <= 1}
+            className="flex items-center gap-1 text-sm font-bold text-slate-500 disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            <ChevronLeft size={16} />
+            Anterior
+          </button>
+          
+          <span className="text-sm font-semibold text-slate-400">
+            Página {currentPage} de {totalPages}
+          </span>
+          
+          <button
+            onClick={() => changePage(currentPage + 1)}
+            disabled={currentPage >= totalPages}
+            className="flex items-center gap-1 text-sm font-bold text-slate-500 disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            Próxima
+            <ChevronRight size={16} />
+          </button>
+        </div>
       )}
     </div>
   );

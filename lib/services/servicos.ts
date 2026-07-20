@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 import type { Database } from "@/lib/supabase/database.types";
 import {
   normalizeServicoInput,
@@ -60,13 +61,13 @@ async function getAuthenticatedSupabase() {
   } = await supabase.auth.getUser();
 
   if (error || !user) {
-    throw new ServicosError("Nao autorizado.", 401);
+    throw new ServicosError("Não autenticado", 401);
   }
 
   return supabase;
 }
 
-export async function listServicos(params: { from?: string; to?: string; limit?: number } = {}) {
+export async function listServicos(params: { from?: string; to?: string; limit?: number; offset?: number; q?: string } = {}) {
   const supabase = await getAuthenticatedSupabase();
   let query = supabase.from("servicos").select("*").order("id", { ascending: false });
 
@@ -78,8 +79,16 @@ export async function listServicos(params: { from?: string; to?: string; limit?:
     query = query.lte("data_hora", params.to);
   }
 
-  if (params.limit) {
+  if (params.q) {
+    query = query.ilike("placa", `%${params.q}%`);
+  }
+
+  if (params.limit !== undefined) {
     query = query.limit(params.limit);
+  }
+
+  if (params.offset !== undefined && params.limit !== undefined) {
+    query = query.range(params.offset, params.offset + params.limit - 1);
   }
 
   const { data, error } = await query;
@@ -91,7 +100,7 @@ export async function listServicos(params: { from?: string; to?: string; limit?:
   return ((data ?? []) as ServicoRow[]).map(normalizeServico);
 }
 
-export async function countServicos(params: { from?: string; to?: string } = {}) {
+export async function countServicos(params: { from?: string; to?: string; q?: string } = {}) {
   const supabase = await getAuthenticatedSupabase();
   let query = supabase.from("servicos").select("id", { count: "exact", head: true });
 
@@ -101,6 +110,10 @@ export async function countServicos(params: { from?: string; to?: string } = {})
 
   if (params.to) {
     query = query.lte("data_hora", params.to);
+  }
+
+  if (params.q) {
+    query = query.ilike("placa", `%${params.q}%`);
   }
 
   const { count, error } = await query;
