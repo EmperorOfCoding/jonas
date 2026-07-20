@@ -141,26 +141,6 @@ export default function RegistroClient() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Valor */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 space-y-2">
-          <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">
-            Valor do Serviço
-          </label>
-          <div className="relative">
-            <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-primary w-6 h-6" />
-            <input
-              required
-              type="number"
-              min="0"
-              step="0.01"
-              value={valor}
-              onChange={(e) => setValor(e.target.value)}
-              placeholder="0,00"
-              className="w-full pl-12 pr-4 py-6 bg-slate-50 border border-slate-100 rounded-2xl text-3xl font-black text-dark-navy outline-none focus:ring-2 focus:ring-primary transition-all"
-            />
-          </div>
-        </div>
-
         {/* Identificação + tipo */}
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 space-y-4">
           <div className="space-y-2">
@@ -195,6 +175,26 @@ export default function RegistroClient() {
                 <Chip key={t} label={t} active={tipo === t} onClick={() => handleTipoChange(t)} />
               ))}
             </div>
+          </div>
+        </div>
+
+        {/* Valor */}
+        <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 space-y-2">
+          <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">
+            Valor do Serviço
+          </label>
+          <div className="relative">
+            <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-primary w-6 h-6" />
+            <input
+              required
+              type="number"
+              min="0"
+              step="0.01"
+              value={valor}
+              onChange={(e) => setValor(e.target.value)}
+              placeholder="0,00"
+              className="w-full pl-12 pr-4 py-6 bg-slate-50 border border-slate-100 rounded-2xl text-3xl font-black text-dark-navy outline-none focus:ring-2 focus:ring-primary transition-all"
+            />
           </div>
         </div>
 

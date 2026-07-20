@@ -25,7 +25,9 @@ export async function carregarResumoRegistro() {
 export async function registrarServico(input: CreateServicoInput) {
   try {
     await createServico(input);
+    revalidatePath("/atividades");
     revalidatePath("/dashboard");
+    revalidatePath("/registro");
     revalidatePath("/relatorio");
     return { ok: true as const };
   } catch (error) {
