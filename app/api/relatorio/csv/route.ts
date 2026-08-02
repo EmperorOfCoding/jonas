@@ -55,6 +55,8 @@ export async function GET(request: NextRequest) {
       lista = lista.filter((s) => s.placa.toUpperCase().includes(q));
     }
 
+    lista.sort((a, b) => new Date(a.data_hora).getTime() - new Date(b.data_hora).getTime());
+
     const resumo = summarizeServicos(lista);
 
     const rows = [
