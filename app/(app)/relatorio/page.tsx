@@ -62,7 +62,7 @@ export default async function RelatorioPage(props: PageProps<"/relatorio">) {
     lista = lista.filter((s) => s.tipo_lavagem?.toLowerCase() === filterServico.toLowerCase());
   }
   if (filterAndar) {
-    lista = lista.filter((s) => s.placa?.toLowerCase().includes(filterAndar.toLowerCase()));
+    lista = lista.filter((s) => s.placa?.toLowerCase() === filterAndar.toLowerCase());
   }
   if (filterEquipe.length > 0) {
     lista = lista.filter((s) => {

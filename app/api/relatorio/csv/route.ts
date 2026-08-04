@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
       lista = lista.filter((s) => s.tipo_lavagem?.toLowerCase() === filterServico.toLowerCase());
     }
     if (filterAndarApto) {
-      lista = lista.filter((s) => s.placa?.toLowerCase().includes(filterAndarApto.toLowerCase()));
+      lista = lista.filter((s) => s.placa?.toLowerCase() === filterAndarApto.toLowerCase());
     }
     if (filterEquipe.length > 0) {
       lista = lista.filter((s) => {
