@@ -36,7 +36,11 @@ export async function GET(request: NextRequest) {
       lista = lista.filter((s) => s.tipo_lavagem?.toLowerCase() === filterServico.toLowerCase());
     }
     if (filterAndarApto) {
-      lista = lista.filter((s) => s.placa?.toLowerCase() === filterAndarApto.toLowerCase());
+      lista = lista.filter((s) => {
+        if (!s.placa) return false;
+        const terms = s.placa.toLowerCase().split(/\s+/);
+        return terms.includes(filterAndarApto.toLowerCase());
+      });
     }
     if (filterEquipe.length > 0) {
       lista = lista.filter((s) => {
@@ -47,7 +51,14 @@ export async function GET(request: NextRequest) {
     }
     if (query) {
       const q = query.trim().toUpperCase();
-      lista = lista.filter((s) => s.placa.toUpperCase().includes(q));
+      const searchTerms = q.split(/\s+/).filter(Boolean);
+      lista = lista.filter((s) => {
+        const p = (s.placa || "").toUpperCase();
+        const pTerms = p.split(/\s+/);
+        return searchTerms.every(term => 
+          /^\d+$/.test(term) ? pTerms.includes(term) : p.includes(term)
+        );
+      });
     }
 
     lista.sort((a, b) => new Date(a.data_hora).getTime() - new Date(b.data_hora).getTime());
