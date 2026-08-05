@@ -23,8 +23,8 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" className={`${inter.variable} ${manrope.variable} ${publicSans.variable} h-full`}>
-      <body className="h-full bg-surface-container font-body antialiased">{children}</body>
+    <html lang="pt-BR" className={`${inter.variable} ${manrope.variable} ${publicSans.variable} h-full`} suppressHydrationWarning>
+      <body className="h-full bg-surface-container font-body antialiased" suppressHydrationWarning>{children}</body>
     </html>
   );
 }

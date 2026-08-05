@@ -33,7 +33,14 @@ export default function RelatorioClient({
   const filteredServicos = useMemo(() => {
     const q = searchQuery.trim().toUpperCase();
     if (!q) return initialServicos;
-    return initialServicos.filter((s) => s.placa.toUpperCase().includes(q));
+    const searchTerms = q.split(/\s+/).filter(Boolean);
+    return initialServicos.filter((s) => {
+      const p = (s.placa || "").toUpperCase();
+      const pTerms = p.split(/\s+/);
+      return searchTerms.every(term => 
+        /^\d+$/.test(term) ? pTerms.includes(term) : p.includes(term)
+      );
+    });
   }, [searchQuery, initialServicos]);
 
   const { totalServicos, receitaTotal, ticketMedio, parteCEO, parteFuncionarios, funcionariosRanking } =
@@ -78,7 +85,7 @@ export default function RelatorioClient({
           <p className="text-white/60 text-xs font-bold uppercase tracking-widest mb-1">
             Faturamento — {labelPeriodo}
           </p>
-          <h2 className="text-4xl font-black text-white">
+          <h2 suppressHydrationWarning className="text-4xl font-black text-white">
             {receitaTotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
           </h2>
           <div className="flex items-center gap-2 mt-4 text-white/80">
@@ -100,7 +107,7 @@ export default function RelatorioClient({
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
             Ticket Médio
           </span>
-          <span className="text-xl font-black text-dark-navy">
+          <span suppressHydrationWarning className="text-xl font-black text-dark-navy">
             {ticketMedio.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
           </span>
         </div>
@@ -114,7 +121,7 @@ export default function RelatorioClient({
         <div className="flex items-center justify-between rounded-xl bg-primary/10 px-4 py-3">
           <div>
             <p className="text-xs font-medium text-primary/70">CEO (R$20/serviço)</p>
-            <p className="font-headline font-bold text-primary">
+            <p suppressHydrationWarning className="font-headline font-bold text-primary">
               {parteCEO.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
             </p>
           </div>
@@ -125,7 +132,7 @@ export default function RelatorioClient({
         <div className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3">
           <div>
             <p className="text-xs font-medium text-slate-400">Funcionários (Total)</p>
-            <p className="font-headline font-bold text-dark-navy">
+            <p suppressHydrationWarning className="font-headline font-bold text-dark-navy">
               {parteFuncionarios.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
             </p>
           </div>
@@ -143,7 +150,7 @@ export default function RelatorioClient({
             {allFuncionariosReceita.map(({ nome, receita }) => (
               <li key={nome} className="flex justify-between items-center bg-slate-50 px-3 py-2 rounded-xl">
                 <span className="text-xs font-semibold text-slate-600">{nome}</span>
-                <span className="text-xs font-bold text-dark-navy">
+                <span suppressHydrationWarning className="text-xs font-bold text-dark-navy">
                   {receita.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                 </span>
               </li>
@@ -154,7 +161,7 @@ export default function RelatorioClient({
         <div className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3">
           <div>
             <p className="text-xs font-medium text-slate-400">Ticket Médio</p>
-            <p className="font-headline font-bold text-dark-navy">
+            <p suppressHydrationWarning className="font-headline font-bold text-dark-navy">
               {ticketMedio.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
             </p>
           </div>
@@ -206,7 +213,7 @@ export default function RelatorioClient({
                         <span className="text-slate-400 text-xs">-</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-right font-bold text-primary">
+                    <td suppressHydrationWarning className="px-4 py-3 text-right font-bold text-primary">
                       {(s.valor ?? 0).toLocaleString("pt-BR", {
                         style: "currency",
                         currency: "BRL",
@@ -224,7 +231,7 @@ export default function RelatorioClient({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pb-2">
         <a
           href={exportCsvHref}
-          className="flex items-center justify-center gap-2 bg-slate-100 py-4 rounded-xl text-slate-600 font-bold hover:bg-slate-200 transition-all"
+          className="flex items-center justify-center gap-2 bg-slate-100 py-4 rounded-xl text-slate-600 font-bold hover:bg-slate-200 cursor-pointer transition-all"
         >
           <Download size={18} />
           <span>CSV</span>
@@ -232,7 +239,7 @@ export default function RelatorioClient({
         <a
           href={exportPdfHref}
           target="_blank"
-          className="flex items-center justify-center gap-2 bg-slate-100 py-4 rounded-xl text-slate-600 font-bold hover:bg-slate-200 transition-all"
+          className="flex items-center justify-center gap-2 bg-slate-100 py-4 rounded-xl text-slate-600 font-bold hover:bg-slate-200 cursor-pointer transition-all"
         >
           <FileText size={18} />
           <span>Exportar PDF / Empresa</span>
@@ -240,7 +247,7 @@ export default function RelatorioClient({
         <a
           href={exportPdfClienteHref}
           target="_blank"
-          className="flex items-center justify-center gap-2 bg-primary/10 py-4 rounded-xl text-primary font-bold hover:bg-primary/20 transition-all"
+          className="flex items-center justify-center gap-2 bg-primary/10 py-4 rounded-xl text-primary font-bold hover:bg-primary/20 cursor-pointer transition-all"
         >
           <FileText size={18} />
           <span>Exportar PDF / Clientes</span>

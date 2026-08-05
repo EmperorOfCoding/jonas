@@ -62,7 +62,11 @@ export default async function RelatorioPage(props: PageProps<"/relatorio">) {
     lista = lista.filter((s) => s.tipo_lavagem?.toLowerCase() === filterServico.toLowerCase());
   }
   if (filterAndar) {
-    lista = lista.filter((s) => s.placa?.toLowerCase() === filterAndar.toLowerCase());
+    lista = lista.filter((s) => {
+      if (!s.placa) return false;
+      const terms = s.placa.toLowerCase().split(/\s+/);
+      return terms.includes(filterAndar.toLowerCase());
+    });
   }
   if (filterEquipe.length > 0) {
     lista = lista.filter((s) => {
@@ -101,7 +105,7 @@ export default async function RelatorioPage(props: PageProps<"/relatorio">) {
       <div className="flex bg-slate-100 rounded-2xl p-1 gap-1">
         <a
           href={mesActiveHref}
-          className={`flex-1 py-2.5 rounded-xl text-sm font-bold text-center transition-all ${
+          className={`flex-1 py-2.5 rounded-xl text-sm font-bold text-center cursor-pointer transition-all ${
             modo === "mes"
               ? "bg-white text-dark-navy shadow-sm"
               : "text-slate-500 hover:text-slate-700"
@@ -111,7 +115,7 @@ export default async function RelatorioPage(props: PageProps<"/relatorio">) {
         </a>
         <a
           href={diaActiveHref}
-          className={`flex-1 py-2.5 rounded-xl text-sm font-bold text-center transition-all ${
+          className={`flex-1 py-2.5 rounded-xl text-sm font-bold text-center cursor-pointer transition-all ${
             modo === "dia"
               ? "bg-white text-dark-navy shadow-sm"
               : "text-slate-500 hover:text-slate-700"
@@ -121,7 +125,7 @@ export default async function RelatorioPage(props: PageProps<"/relatorio">) {
         </a>
         <a
           href={periodoHref}
-          className={`flex-1 py-2.5 rounded-xl text-sm font-bold text-center transition-all ${
+          className={`flex-1 py-2.5 rounded-xl text-sm font-bold text-center cursor-pointer transition-all ${
             modo === "periodo"
               ? "bg-white text-dark-navy shadow-sm"
               : "text-slate-500 hover:text-slate-700"
@@ -141,7 +145,7 @@ export default async function RelatorioPage(props: PageProps<"/relatorio">) {
                 <a
                   key={n}
                   href={mesHref(n)}
-                  className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all ${
+                  className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap cursor-pointer transition-all ${
                     n === mes
                       ? "bg-primary text-white shadow-md"
                       : "bg-slate-100 text-slate-600 hover:bg-slate-200"
@@ -306,7 +310,7 @@ export default async function RelatorioPage(props: PageProps<"/relatorio">) {
           <div className="w-full sm:w-[calc(50%-8px)] lg:w-auto lg:flex-none flex items-end">
             <button
               type="submit"
-              className="w-full lg:w-24 py-2 bg-primary text-white text-xs font-bold rounded-xl shadow-md hover:bg-primary-dark transition-all h-9"
+              className="w-full lg:w-24 py-2 bg-primary text-white text-xs font-bold rounded-xl shadow-md hover:bg-primary-dark transition-all h-9 cursor-pointer"
             >
               Filtrar
             </button>
