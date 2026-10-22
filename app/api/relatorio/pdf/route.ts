@@ -7,8 +7,8 @@ import {
   summarizeServicos,
 } from "@/lib/services/servicos";
 
-function formatMoney(value: number) {
-  return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+function formatMoney(value: number | null | undefined) {
+  return (value || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
 export async function GET(request: NextRequest) {
@@ -53,11 +53,15 @@ export async function GET(request: NextRequest) {
       const q = query.trim().toUpperCase();
       const searchTerms = q.split(/\s+/).filter(Boolean);
       lista = lista.filter((s) => {
-        const p = (s.placa || "").toUpperCase();
-        const pTerms = p.split(/\s+/);
-        return searchTerms.every(term => 
-          /^\d+$/.test(term) ? pTerms.includes(term) : p.includes(term)
-        );
+        const placa = (s.placa || "").toUpperCase();
+        const andar = (s.andar || "").toUpperCase();
+        const servicoLocal = (s.local || "").toUpperCase();
+        return searchTerms.every(term => {
+          if (/^\d+$/.test(term)) {
+            return andar === term || placa.split(/\s+/).includes(term);
+          }
+          return placa.includes(term) || andar.includes(term) || servicoLocal.includes(term);
+        });
       });
     }
 
@@ -138,6 +142,20 @@ export async function GET(request: NextRequest) {
       margin-bottom: 40px;
       font-size: 14px;
       font-weight: 500;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .btn-voltar {
+      background: #2563eb;
+      color: white;
+      text-decoration: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
     }
 
     /* Header */
@@ -294,7 +312,12 @@ export async function GET(request: NextRequest) {
 <body>
   <div class="page-container">
     <div class="banner no-print">
-      Dica: Selecione <strong>"Salvar como PDF"</strong> ou <strong>"Imprimir para PDF"</strong> na janela do sistema para baixar o arquivo.
+      <a href="javascript:history.back()" class="btn-voltar">⬅ Voltar</a>
+      <div>
+        Pressione <strong>Ctrl + P</strong> (ou Cmd + P) para imprimir ou salvar como PDF.<br>
+        Dica: Selecione <strong>"Salvar como PDF"</strong> ou <strong>"Imprimir para PDF"</strong> na janela do sistema para baixar o arquivo.
+      </div>
+      <button onclick="window.print()" class="btn-voltar" style="background: #1e3a8a;">Imprimir</button>
     </div>
 
     <div class="header">

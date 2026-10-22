@@ -35,12 +35,16 @@ export default function RelatorioClient({
     if (!q) return initialServicos;
     const searchTerms = q.split(/\s+/).filter(Boolean);
     return initialServicos.filter((s) => {
-      const p = (s.placa || "").toUpperCase();
-      const pTerms = p.split(/\s+/);
-      return searchTerms.every(term => 
-        /^\d+$/.test(term) ? pTerms.includes(term) : p.includes(term)
-      );
-    });
+        const placa = (s.placa || "").toUpperCase();
+        const andar = (s.andar || "").toUpperCase();
+        const servicoLocal = (s.local || "").toUpperCase();
+        return searchTerms.every(term => {
+          if (/^\d+$/.test(term)) {
+            return andar === term || placa.split(/\s+/).includes(term);
+          }
+          return placa.includes(term) || andar.includes(term) || servicoLocal.includes(term);
+        });
+      });
   }, [searchQuery, initialServicos]);
 
   const { totalServicos, receitaTotal, ticketMedio, parteCEO, parteFuncionarios, funcionariosRanking } =
@@ -238,7 +242,6 @@ export default function RelatorioClient({
         </a>
         <a
           href={exportPdfHref}
-          target="_blank"
           className="flex items-center justify-center gap-2 bg-slate-100 py-4 rounded-xl text-slate-600 font-bold hover:bg-slate-200 cursor-pointer transition-all"
         >
           <FileText size={18} />
@@ -246,7 +249,6 @@ export default function RelatorioClient({
         </a>
         <a
           href={exportPdfClienteHref}
-          target="_blank"
           className="flex items-center justify-center gap-2 bg-primary/10 py-4 rounded-xl text-primary font-bold hover:bg-primary/20 cursor-pointer transition-all"
         >
           <FileText size={18} />

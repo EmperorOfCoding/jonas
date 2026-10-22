@@ -8,6 +8,12 @@ export class ServicosError extends Error {
   }
 }
 
+export type AtividadeFilterParams = {
+  q?: string;
+  torre?: string;
+  data?: string;
+};
+
 export type Periodo = "hoje" | "semana" | "mes";
 export const PERIODOS: Periodo[] = ["hoje", "semana", "mes"];
 export const CEO_SHARE_PER_SERVICE = 20;
@@ -138,5 +144,56 @@ export function summarizeServicos(lista: Servico[]) {
     veiculosFrequentes: Object.entries(porVeiculo)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Atividades — client-side filter, sort, and URL param helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Filters a list of services by placa (q), torre (andar), and date.
+ * All comparisons are case-insensitive and additive (AND logic).
+ */
+export function filterServicos(lista: Servico[], filters: AtividadeFilterParams): Servico[] {
+  const q = (filters.q ?? "").trim().toUpperCase();
+  const torre = (filters.torre ?? "").trim();
+  const data = (filters.data ?? "").trim();
+
+  return lista.filter((s) => {
+    if (q && !s.placa.toUpperCase().includes(q)) return false;
+    if (torre && s.andar !== torre) return false;
+    if (data) {
+      // Compare only the date portion (YYYY-MM-DD) of the stored UTC ISO string.
+      const storedDay = s.data_hora.slice(0, 10);
+      if (storedDay !== data) return false;
+    }
+    return true;
+  });
+}
+
+/**
+ * Returns a NEW array sorted by id descending (most recently inserted first).
+ * Does NOT mutate the original array.
+ */
+export function sortServicosByIdDesc(lista: Servico[]): Servico[] {
+  return [...lista].sort((a, b) => Number(b.id) - Number(a.id));
+}
+
+/**
+ * Safely extracts and validates atividades filter params from URL searchParams.
+ */
+export function parseAtividadeParams(raw: Record<string, string | undefined>): {
+  q: string;
+  torre: string;
+  data: string;
+  page: number;
+} {
+  const page = Math.max(1, parseInt(raw.page ?? "1", 10) || 1);
+  return {
+    q: raw.q ?? "",
+    torre: raw.torre ?? "",
+    data: raw.data ?? "",
+    page,
   };
 }

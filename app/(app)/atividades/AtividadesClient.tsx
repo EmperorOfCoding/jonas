@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { Car, ChevronDown, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { useState, useTransition, useEffect, useMemo } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { Car, ChevronDown, Search, ChevronLeft, ChevronRight, X } from "lucide-react";
 import type { Servico, UpdateServicoInput } from "@/lib/services/servicos";
+import { filterServicos, sortServicosByIdDesc } from "@/lib/services/servicos-utils";
 import { ANDARES, FUNCIONARIOS, LOCAIS, TIPOS_LAVAGEM } from "../servico-options";
 import { atualizarServico, excluirServico } from "./actions";
 
@@ -40,6 +41,20 @@ function ServiceItem({
 }) {
   const [expanded, setExpanded] = useState(false);
 
+  // Display date using stored UTC ISO string — slice(0,10) gives YYYY-MM-DD
+  // then convert to DD/MM for Brazilian display without timezone shift.
+  function formatDate(iso: string) {
+    const day = iso.slice(8, 10);
+    const month = iso.slice(5, 7);
+    return `${day}/${month}`;
+  }
+
+  function formatTime(iso: string) {
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return "";
+    return date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  }
+
   return (
     <div className="bg-white p-4 rounded-2xl flex flex-col border border-slate-100 shadow-sm overflow-hidden">
       <div
@@ -64,14 +79,8 @@ function ServiceItem({
           </span>
           <span className="text-[10px] uppercase font-bold text-slate-300 tracking-wider flex items-center gap-1">
             <span suppressHydrationWarning>
-              {new Date(servico.data_hora).toLocaleDateString("pt-BR", {
-                day: "2-digit",
-                month: "2-digit",
-              })}{" "}
-              {new Date(servico.data_hora).toLocaleTimeString("pt-BR", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
+              {formatDate(servico.data_hora)}{" "}
+              {formatTime(servico.data_hora)}
             </span>
             <ChevronDown
               size={14}
@@ -91,7 +100,7 @@ function ServiceItem({
           </div>
           <div className="flex flex-col">
             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-              Localização
+              Localizacao
             </span>
             <span className="text-sm font-semibold text-dark-navy">{servico.local}</span>
           </div>
@@ -106,10 +115,7 @@ function ServiceItem({
               Data
             </span>
             <span suppressHydrationWarning className="text-sm font-semibold text-dark-navy">
-              {new Date(servico.data_hora).toLocaleDateString("pt-BR", {
-                day: "2-digit",
-                month: "2-digit",
-              })}
+              {formatDate(servico.data_hora)}
             </span>
           </div>
 
@@ -265,51 +271,81 @@ function EditItem({
   );
 }
 
-export function AtividadesClient({ 
-  initialServicos, 
-  initialSearch, 
-  currentPage, 
-  totalPages 
-}: { 
-  initialServicos: Servico[],
-  initialSearch: string,
-  currentPage: number,
-  totalPages: number
+export function AtividadesClient({
+  initialServicos,
+  initialSearch,
+  initialTorre,
+  initialData,
+  currentPage,
+  totalPages,
+}: {
+  initialServicos: Servico[];
+  initialSearch: string;
+  initialTorre: string;
+  initialData: string;
+  currentPage: number;
+  totalPages: number;
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  
+
   const [servicos, setServicos] = useState(initialServicos);
   const [search, setSearch] = useState(initialSearch);
+  const [torre, setTorre] = useState(initialTorre);
+  const [data, setData] = useState(initialData);
   const [editingId, setEditingId] = useState<string | number | null>(null);
   const [form, setForm] = useState<UpdateServicoInput | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  // Sync state when props change (server component updates)
+  // Sync state when server re-renders (page navigation)
   useEffect(() => {
     setServicos(initialServicos);
   }, [initialServicos]);
 
-  // Handle Debounced Search
+  // Client-side filter + sort — instant, no round-trip
+  // Always order by id desc so the most recently created service appears first
+  const listaFiltrada = useMemo(() => {
+    const filtered = filterServicos(servicos, { q: search, torre, data });
+    return sortServicosByIdDesc(filtered);
+  }, [servicos, search, torre, data]);
+
+  // Debounced push to URL only for placa (q) — triggers server re-fetch
   useEffect(() => {
     const timer = setTimeout(() => {
       if (search !== initialSearch) {
-        const params = new URLSearchParams();
-        if (search) params.set("q", search);
-        router.push(`${pathname}?${params.toString()}`);
+        pushParams({ q: search, torre, data, page: 1 });
       }
     }, 400);
-
     return () => clearTimeout(timer);
-  }, [search, initialSearch, pathname, router]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search]);
 
-  function changePage(newPage: number) {
+  function pushParams(overrides: { q?: string; torre?: string; data?: string; page?: number }) {
     const params = new URLSearchParams();
-    if (search) params.set("q", search);
-    params.set("page", newPage.toString());
+    const q = overrides.q ?? search;
+    const t = overrides.torre ?? torre;
+    const d = overrides.data ?? data;
+    const p = overrides.page ?? currentPage;
+    if (q) params.set("q", q);
+    if (t) params.set("torre", t);
+    if (d) params.set("data", d);
+    if (p > 1) params.set("page", String(p));
     router.push(`${pathname}?${params.toString()}`);
   }
+
+  function changePage(newPage: number) {
+    pushParams({ page: newPage });
+  }
+
+  function clearFilters() {
+    setSearch("");
+    setTorre("");
+    setData("");
+    router.push(pathname);
+  }
+
+  const hasActiveFilters = search || torre || data;
 
   function startEdit(servico: Servico) {
     setMessage(null);
@@ -349,12 +385,12 @@ export function AtividadesClient({
       );
       setEditingId(null);
       setForm(null);
-      setMessage("Serviço atualizado.");
+      setMessage("Servico atualizado.");
     });
   }
 
   function removeServico(id: string | number) {
-    const confirmed = window.confirm("Excluir este serviço?");
+    const confirmed = window.confirm("Excluir este servico?");
     if (!confirmed) return;
     setMessage(null);
     startTransition(async () => {
@@ -364,22 +400,84 @@ export function AtividadesClient({
         return;
       }
       setServicos((current) => current.filter((s) => s.id !== id));
-      setMessage("Serviço excluído.");
+      setMessage("Servico excluido.");
     });
   }
 
   return (
     <div className="space-y-3 pb-8">
+      {/* Search bar — placa */}
       <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex items-center gap-3">
         <Search className="text-slate-400 w-5 h-5 shrink-0" />
         <input
+          id="atividades-search-placa"
           type="text"
           placeholder="Buscar por modelo ou placa..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="flex-1 outline-none text-dark-navy text-sm font-semibold placeholder:font-normal bg-transparent"
         />
+        {search && (
+          <button type="button" onClick={() => setSearch("")} className="text-slate-300 hover:text-slate-500">
+            <X size={16} />
+          </button>
+        )}
       </div>
+
+      {/* Filter row — data + torre */}
+      <div className="flex gap-2">
+        <div className="flex-1 bg-white rounded-2xl px-4 py-3 shadow-sm border border-slate-100 flex items-center gap-2">
+          <label htmlFor="atividades-filter-data" className="text-[10px] font-bold uppercase tracking-widest text-slate-400 shrink-0">
+            Data
+          </label>
+          <input
+            id="atividades-filter-data"
+            type="date"
+            value={data}
+            onChange={(e) => setData(e.target.value)}
+            className="flex-1 outline-none text-dark-navy text-sm font-semibold bg-transparent min-w-0"
+          />
+          {data && (
+            <button type="button" onClick={() => setData("")} className="text-slate-300 hover:text-slate-500 shrink-0">
+              <X size={14} />
+            </button>
+          )}
+        </div>
+
+        <div className="flex-1 bg-white rounded-2xl px-4 py-3 shadow-sm border border-slate-100 flex items-center gap-2">
+          <label htmlFor="atividades-filter-torre" className="text-[10px] font-bold uppercase tracking-widest text-slate-400 shrink-0">
+            Torre
+          </label>
+          <select
+            id="atividades-filter-torre"
+            value={torre}
+            onChange={(e) => setTorre(e.target.value)}
+            className="flex-1 outline-none text-dark-navy text-sm font-semibold bg-transparent min-w-0 appearance-none"
+          >
+            <option value="">Todas</option>
+            {ANDARES.map((a) => (
+              <option key={a} value={a}>{a}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Active filter summary */}
+      {hasActiveFilters && (
+        <div className="flex items-center justify-between px-1">
+          <span className="text-xs text-slate-400 font-medium">
+            {listaFiltrada.length} resultado{listaFiltrada.length !== 1 ? "s" : ""}
+          </span>
+          <button
+            type="button"
+            onClick={clearFilters}
+            className="text-xs font-bold text-primary hover:text-primary/70 flex items-center gap-1"
+          >
+            <X size={12} />
+            Limpar filtros
+          </button>
+        </div>
+      )}
 
       {message && (
         <div className="rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-dark-navy border border-slate-100 shadow-sm">
@@ -387,12 +485,12 @@ export function AtividadesClient({
         </div>
       )}
 
-      {servicos.length === 0 ? (
+      {listaFiltrada.length === 0 ? (
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
-          <p className="text-sm text-slate-400">Nenhum serviço encontrado.</p>
+          <p className="text-sm text-slate-400">Nenhum servico encontrado.</p>
         </div>
       ) : (
-        servicos.map((servico) => {
+        listaFiltrada.map((servico) => {
           const isEditing = editingId === servico.id && form;
           if (isEditing) {
             return (
@@ -432,17 +530,17 @@ export function AtividadesClient({
             <ChevronLeft size={16} />
             Anterior
           </button>
-          
+
           <span className="text-sm font-semibold text-slate-400">
-            Página {currentPage} de {totalPages}
+            Pagina {currentPage} de {totalPages}
           </span>
-          
+
           <button
             onClick={() => changePage(currentPage + 1)}
             disabled={currentPage >= totalPages}
             className="flex items-center gap-1 text-sm font-bold text-slate-500 disabled:opacity-30 disabled:cursor-not-allowed"
           >
-            Próxima
+            Proxima
             <ChevronRight size={16} />
           </button>
         </div>

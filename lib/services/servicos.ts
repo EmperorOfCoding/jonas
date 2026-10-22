@@ -11,6 +11,7 @@ import {
   ServicosError,
   type Periodo,
   type Servico,
+  type AtividadeFilterParams,
   parsePeriodo,
   periodoStart,
   defaultReportRange,
@@ -19,9 +20,12 @@ import {
   summarizeServicos,
   getParteCEO,
   getParteFuncionario,
+  filterServicos,
+  sortServicosByIdDesc,
+  parseAtividadeParams,
 } from "./servicos-utils";
 
-export type { Periodo, Servico };
+export type { Periodo, Servico, AtividadeFilterParams };
 export {
   ServicosError,
   parsePeriodo,
@@ -32,6 +36,9 @@ export {
   summarizeServicos,
   getParteCEO,
   getParteFuncionario,
+  filterServicos,
+  sortServicosByIdDesc,
+  parseAtividadeParams,
 };
 
 export type CreateServicoInput = ServicoInput;

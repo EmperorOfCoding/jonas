@@ -13,8 +13,8 @@ function csvCell(value: string | number) {
   return `"${text}"`;
 }
 
-function formatMoney(value: number) {
-  return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+function formatMoney(value: number | null | undefined) {
+  return (value || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
 export async function GET(request: NextRequest) {
@@ -58,11 +58,15 @@ export async function GET(request: NextRequest) {
       const q = query.trim().toUpperCase();
       const searchTerms = q.split(/\s+/).filter(Boolean);
       lista = lista.filter((s) => {
-        const p = (s.placa || "").toUpperCase();
-        const pTerms = p.split(/\s+/);
-        return searchTerms.every(term => 
-          /^\d+$/.test(term) ? pTerms.includes(term) : p.includes(term)
-        );
+        const placa = (s.placa || "").toUpperCase();
+        const andar = (s.andar || "").toUpperCase();
+        const servicoLocal = (s.local || "").toUpperCase();
+        return searchTerms.every(term => {
+          if (/^\d+$/.test(term)) {
+            return andar === term || placa.split(/\s+/).includes(term);
+          }
+          return placa.includes(term) || andar.includes(term) || servicoLocal.includes(term);
+        });
       });
     }
 

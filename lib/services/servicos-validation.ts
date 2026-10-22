@@ -48,7 +48,16 @@ export function normalizeServicoInput(input: ServicoInput): ServicoPayload {
     throw new ServicosValidationError("Informe um valor valido.");
   }
 
-  const dataHora = input.data_hora ? new Date(input.data_hora) : new Date();
+  // Fix timezone bug: a date-only string "YYYY-MM-DD" parsed via new Date() is
+  // treated as midnight UTC, which shifts to the previous day in UTC-N timezones
+  // (e.g. BRT = UTC-3 shows "2026-10-03" as "2026-10-02" locally).
+  // Anchor to T12:00:00Z (noon UTC) — safe for every timezone from UTC-12 to UTC+14.
+  const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+  const rawInput = input.data_hora || new Date().toISOString().slice(0, 10);
+  const isoString = DATE_ONLY_PATTERN.test(rawInput.trim())
+    ? `${rawInput.trim()}T12:00:00Z`
+    : rawInput;
+  const dataHora = new Date(isoString);
   if (Number.isNaN(dataHora.getTime())) {
     throw new ServicosValidationError("Informe uma data valida.");
   }
