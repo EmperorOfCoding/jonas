@@ -13,11 +13,10 @@ export default async function AtividadesPage({
   const limit = 50;
   const offset = (page - 1) * limit;
 
-  // Server-side filtering by placa (q) — torre and data are filtered client-side
-  // for instant UX without round-trips, since the full page is already 50 records max.
+  // Server-side filtering by placa (q), torre, and data with pagination
   const [lista, total] = await Promise.all([
-    listServicos({ q: query, limit, offset }),
-    countServicos({ q: query }),
+    listServicos({ q: query, torre, data, limit, offset }),
+    countServicos({ q: query, torre, data }),
   ]);
 
   const totalPages = Math.ceil(total / limit);

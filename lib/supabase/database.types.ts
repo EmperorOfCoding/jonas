@@ -14,6 +14,7 @@ export type Database = {
           data_hora: string | null;
           forma_pagamento: string | null;
           valor: number | string | null;
+          created_at?: string | null;
         };
         Insert: {
           id?: string | number;
@@ -25,6 +26,7 @@ export type Database = {
           data_hora: string;
           forma_pagamento: string;
           valor: number;
+          created_at?: string;
         };
         Update: {
           id?: string | number;
@@ -36,6 +38,7 @@ export type Database = {
           data_hora?: string;
           forma_pagamento?: string;
           valor?: number;
+          created_at?: string;
         };
         Relationships: [];
       };

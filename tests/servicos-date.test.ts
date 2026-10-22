@@ -186,3 +186,71 @@ test("parseAtividadeParams clamps page to 1 for invalid values", () => {
   assert.equal(parseAtividadeParams({ page: "0" }).page, 1);
   assert.equal(parseAtividadeParams({ page: "-5" }).page, 1);
 });
+
+// ---------------------------------------------------------------------------
+// UUID sorting by created_at: newest record must always appear first
+// ---------------------------------------------------------------------------
+
+test("sortServicosByIdDesc orders by created_at desc even when id is a UUID", () => {
+  // TESTE 2201 has UUID starting with "0f...", older TAOS 2701 starts with "f2..."
+  // Alphabetically, "f2..." > "0f...", but TESTE 2201 was created later!
+  const olderItem: Servico = {
+    id: "f2ca59ee-3ead-4367-b1c4-afa1ee484d83",
+    placa: "TAOS 2701",
+    tipo_lavagem: "Completo",
+    andar: "Torre B",
+    local: "Garagem",
+    funcionario: "Jonas",
+    data_hora: "2026-10-16T00:00:00.000Z",
+    forma_pagamento: "Pix",
+    valor: 40,
+    created_at: "2026-10-21T22:42:37.630Z",
+  };
+
+  const newestItem: Servico = {
+    id: "0f58db8a-30b6-4bba-9808-53b822911c31",
+    placa: "TESTE 2201",
+    tipo_lavagem: "Completo G",
+    andar: "Torre A",
+    local: "Garagem",
+    funcionario: "Jonas",
+    data_hora: "2026-10-25T12:00:00.000Z",
+    forma_pagamento: "Pix",
+    valor: 40,
+    created_at: "2026-10-22T19:54:07.430Z",
+  };
+
+  const sorted = sortServicosByIdDesc([olderItem, newestItem]);
+  assert.equal(sorted[0].placa, "TESTE 2201", "newest created service must be first");
+  assert.equal(sorted[1].placa, "TAOS 2701");
+});
+
+test("filterServicos accepts DD/MM/YYYY date strings and matches correctly", () => {
+  const item: Servico = {
+    id: "0f58db8a-30b6-4bba-9808-53b822911c31",
+    placa: "TESTE 2201",
+    tipo_lavagem: "Completo G",
+    andar: "Torre A",
+    local: "Garagem",
+    funcionario: "Jonas",
+    data_hora: "2026-10-25T12:00:00.000Z",
+    forma_pagamento: "Pix",
+    valor: 40,
+  };
+
+  // Searching with Brazilian DD/MM/YYYY
+  const resultBR = filterServicos([item], { data: "25/10/2026" });
+  assert.equal(resultBR.length, 1);
+  assert.equal(resultBR[0].placa, "TESTE 2201");
+
+  // Searching with ISO YYYY-MM-DD
+  const resultISO = filterServicos([item], { data: "2026-10-25" });
+  assert.equal(resultISO.length, 1);
+  assert.equal(resultISO[0].placa, "TESTE 2201");
+});
+
+test("parseAtividadeParams normalizes DD/MM/YYYY date to YYYY-MM-DD", () => {
+  const params = parseAtividadeParams({ data: "25/10/2026" });
+  assert.equal(params.data, "2026-10-25");
+});
+

@@ -41,12 +41,15 @@ function ServiceItem({
 }) {
   const [expanded, setExpanded] = useState(false);
 
-  // Display date using stored UTC ISO string — slice(0,10) gives YYYY-MM-DD
-  // then convert to DD/MM for Brazilian display without timezone shift.
+  // Display date using stored UTC ISO string — format as DD/MM/YYYY
+  // so the year is clearly visible (e.g., 25/10/2026).
   function formatDate(iso: string) {
-    const day = iso.slice(8, 10);
+    if (!iso) return "";
+    const year = iso.slice(0, 4);
     const month = iso.slice(5, 7);
-    return `${day}/${month}`;
+    const day = iso.slice(8, 10);
+    if (!day || !month || !year) return "";
+    return `${day}/${month}/${year}`;
   }
 
   function formatTime(iso: string) {
@@ -298,13 +301,16 @@ export function AtividadesClient({
   const [message, setMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  // Sync state when server re-renders (page navigation)
+  // Sync state when server re-renders (page navigation / URL changes)
   useEffect(() => {
     setServicos(initialServicos);
-  }, [initialServicos]);
+    setSearch(initialSearch);
+    setTorre(initialTorre);
+    setData(initialData);
+  }, [initialServicos, initialSearch, initialTorre, initialData]);
 
   // Client-side filter + sort — instant, no round-trip
-  // Always order by id desc so the most recently created service appears first
+  // Always order by created_at desc so the most recently created service appears first
   const listaFiltrada = useMemo(() => {
     const filtered = filterServicos(servicos, { q: search, torre, data });
     return sortServicosByIdDesc(filtered);
@@ -314,7 +320,7 @@ export function AtividadesClient({
   useEffect(() => {
     const timer = setTimeout(() => {
       if (search !== initialSearch) {
-        pushParams({ q: search, torre, data, page: 1 });
+        pushParams({ q: search, page: 1 });
       }
     }, 400);
     return () => clearTimeout(timer);
@@ -323,15 +329,16 @@ export function AtividadesClient({
 
   function pushParams(overrides: { q?: string; torre?: string; data?: string; page?: number }) {
     const params = new URLSearchParams();
-    const q = overrides.q ?? search;
-    const t = overrides.torre ?? torre;
-    const d = overrides.data ?? data;
-    const p = overrides.page ?? currentPage;
+    const q = overrides.q !== undefined ? overrides.q : search;
+    const t = overrides.torre !== undefined ? overrides.torre : torre;
+    const d = overrides.data !== undefined ? overrides.data : data;
+    const p = overrides.page !== undefined ? overrides.page : currentPage;
     if (q) params.set("q", q);
     if (t) params.set("torre", t);
     if (d) params.set("data", d);
     if (p > 1) params.set("page", String(p));
-    router.push(`${pathname}?${params.toString()}`);
+    const qs = params.toString();
+    router.push(qs ? `${pathname}?${qs}` : pathname);
   }
 
   function changePage(newPage: number) {
@@ -434,11 +441,22 @@ export function AtividadesClient({
             id="atividades-filter-data"
             type="date"
             value={data}
-            onChange={(e) => setData(e.target.value)}
+            onChange={(e) => {
+              const val = e.target.value;
+              setData(val);
+              pushParams({ data: val, page: 1 });
+            }}
             className="flex-1 outline-none text-dark-navy text-sm font-semibold bg-transparent min-w-0"
           />
           {data && (
-            <button type="button" onClick={() => setData("")} className="text-slate-300 hover:text-slate-500 shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                setData("");
+                pushParams({ data: "", page: 1 });
+              }}
+              className="text-slate-300 hover:text-slate-500 shrink-0"
+            >
               <X size={14} />
             </button>
           )}
@@ -451,7 +469,11 @@ export function AtividadesClient({
           <select
             id="atividades-filter-torre"
             value={torre}
-            onChange={(e) => setTorre(e.target.value)}
+            onChange={(e) => {
+              const val = e.target.value;
+              setTorre(val);
+              pushParams({ torre: val, page: 1 });
+            }}
             className="flex-1 outline-none text-dark-navy text-sm font-semibold bg-transparent min-w-0 appearance-none"
           >
             <option value="">Todas</option>

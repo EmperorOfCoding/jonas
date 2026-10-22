@@ -28,6 +28,7 @@ export type Servico = {
   data_hora: string;
   forma_pagamento: string;
   valor: number;
+  created_at?: string;
 };
 
 export function toDateInput(date: Date) {
@@ -148,8 +149,25 @@ export function summarizeServicos(lista: Servico[]) {
 }
 
 // ---------------------------------------------------------------------------
-// Atividades — client-side filter, sort, and URL param helpers
+// Atividades — filter, sort, and URL param helpers
 // ---------------------------------------------------------------------------
+
+/**
+ * Normalizes user/URL date inputs (e.g., "25/10/2026" or "2026-10-25") to "YYYY-MM-DD".
+ */
+export function normalizeDateFilter(raw?: string): string {
+  if (!raw) return "";
+  const trimmed = raw.trim();
+  const ddmmyyyy = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(trimmed);
+  if (ddmmyyyy) {
+    const [, d, m, y] = ddmmyyyy;
+    return `${y}-${m}-${d}`;
+  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    return trimmed;
+  }
+  return trimmed;
+}
 
 /**
  * Filters a list of services by placa (q), torre (andar), and date.
@@ -158,27 +176,55 @@ export function summarizeServicos(lista: Servico[]) {
 export function filterServicos(lista: Servico[], filters: AtividadeFilterParams): Servico[] {
   const q = (filters.q ?? "").trim().toUpperCase();
   const torre = (filters.torre ?? "").trim();
-  const data = (filters.data ?? "").trim();
+  const rawData = (filters.data ?? "").trim();
+  const normalizedData = normalizeDateFilter(rawData);
 
   return lista.filter((s) => {
     if (q && !s.placa.toUpperCase().includes(q)) return false;
     if (torre && s.andar !== torre) return false;
-    if (data) {
+    if (normalizedData) {
       // Compare only the date portion (YYYY-MM-DD) of the stored UTC ISO string.
       const storedDay = s.data_hora.slice(0, 10);
-      if (storedDay !== data) return false;
+      if (storedDay !== normalizedData) return false;
     }
     return true;
   });
 }
 
 /**
- * Returns a NEW array sorted by id descending (most recently inserted first).
+ * Returns a NEW array sorted by newest created first:
+ * 1. created_at timestamp desc (matches PostgreSQL creation order)
+ * 2. data_hora timestamp desc (fallback if created_at absent)
+ * 3. id desc (numeric or string)
  * Does NOT mutate the original array.
  */
-export function sortServicosByIdDesc(lista: Servico[]): Servico[] {
-  return [...lista].sort((a, b) => Number(b.id) - Number(a.id));
+export function sortServicosRecent(lista: Servico[]): Servico[] {
+  return [...lista].sort((a, b) => {
+    if (a.created_at && b.created_at) {
+      const timeDiff = new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      if (!Number.isNaN(timeDiff) && timeDiff !== 0) return timeDiff;
+    } else if (b.created_at) {
+      return 1;
+    } else if (a.created_at) {
+      return -1;
+    }
+
+    if (a.data_hora && b.data_hora) {
+      const timeDiff = new Date(b.data_hora).getTime() - new Date(a.data_hora).getTime();
+      if (!Number.isNaN(timeDiff) && timeDiff !== 0) return timeDiff;
+    }
+
+    const numA = Number(a.id);
+    const numB = Number(b.id);
+    if (!Number.isNaN(numA) && !Number.isNaN(numB) && numA !== numB) {
+      return numB - numA;
+    }
+
+    return String(b.id).localeCompare(String(a.id));
+  });
 }
+
+export const sortServicosByIdDesc = sortServicosRecent;
 
 /**
  * Safely extracts and validates atividades filter params from URL searchParams.
@@ -193,7 +239,7 @@ export function parseAtividadeParams(raw: Record<string, string | undefined>): {
   return {
     q: raw.q ?? "",
     torre: raw.torre ?? "",
-    data: raw.data ?? "",
+    data: normalizeDateFilter(raw.data),
     page,
   };
 }

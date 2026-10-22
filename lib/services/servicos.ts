@@ -22,7 +22,9 @@ import {
   getParteFuncionario,
   filterServicos,
   sortServicosByIdDesc,
+  sortServicosRecent,
   parseAtividadeParams,
+  normalizeDateFilter,
 } from "./servicos-utils";
 
 export type { Periodo, Servico, AtividadeFilterParams };
@@ -38,7 +40,9 @@ export {
   getParteFuncionario,
   filterServicos,
   sortServicosByIdDesc,
+  sortServicosRecent,
   parseAtividadeParams,
+  normalizeDateFilter,
 };
 
 export type CreateServicoInput = ServicoInput;
@@ -57,6 +61,7 @@ function normalizeServico(row: ServicoRow): Servico {
     data_hora: row.data_hora ?? "",
     forma_pagamento: row.forma_pagamento ?? "",
     valor: Number(row.valor ?? 0),
+    created_at: row.created_at ?? undefined,
   };
 }
 
@@ -74,9 +79,23 @@ async function getAuthenticatedSupabase() {
   return supabase;
 }
 
-export async function listServicos(params: { from?: string; to?: string; limit?: number; offset?: number; q?: string } = {}) {
+export async function listServicos(
+  params: {
+    from?: string;
+    to?: string;
+    limit?: number;
+    offset?: number;
+    q?: string;
+    torre?: string;
+    data?: string;
+  } = {}
+) {
   const supabase = await getAuthenticatedSupabase();
-  let query = supabase.from("servicos").select("*").order("id", { ascending: false });
+  let query = supabase
+    .from("servicos")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .order("data_hora", { ascending: false });
 
   if (params.from) {
     query = query.gte("data_hora", params.from);
@@ -90,12 +109,20 @@ export async function listServicos(params: { from?: string; to?: string; limit?:
     query = query.ilike("placa", `%${params.q}%`);
   }
 
-  if (params.limit !== undefined) {
-    query = query.limit(params.limit);
+  if (params.torre) {
+    query = query.eq("andar", params.torre);
   }
 
-  if (params.offset !== undefined && params.limit !== undefined) {
+  if (params.data) {
+    query = query
+      .gte("data_hora", `${params.data}T00:00:00.000Z`)
+      .lte("data_hora", `${params.data}T23:59:59.999Z`);
+  }
+
+  if (params.limit !== undefined && params.offset !== undefined) {
     query = query.range(params.offset, params.offset + params.limit - 1);
+  } else if (params.limit !== undefined) {
+    query = query.limit(params.limit);
   }
 
   const { data, error } = await query;
@@ -107,7 +134,15 @@ export async function listServicos(params: { from?: string; to?: string; limit?:
   return ((data ?? []) as ServicoRow[]).map(normalizeServico);
 }
 
-export async function countServicos(params: { from?: string; to?: string; q?: string } = {}) {
+export async function countServicos(
+  params: {
+    from?: string;
+    to?: string;
+    q?: string;
+    torre?: string;
+    data?: string;
+  } = {}
+) {
   const supabase = await getAuthenticatedSupabase();
   let query = supabase.from("servicos").select("id", { count: "exact", head: true });
 
@@ -121,6 +156,16 @@ export async function countServicos(params: { from?: string; to?: string; q?: st
 
   if (params.q) {
     query = query.ilike("placa", `%${params.q}%`);
+  }
+
+  if (params.torre) {
+    query = query.eq("andar", params.torre);
+  }
+
+  if (params.data) {
+    query = query
+      .gte("data_hora", `${params.data}T00:00:00.000Z`)
+      .lte("data_hora", `${params.data}T23:59:59.999Z`);
   }
 
   const { count, error } = await query;
