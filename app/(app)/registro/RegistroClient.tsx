@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { MapPin, DollarSign, CheckCircle, AlertCircle } from "lucide-react";
 import { registrarServico, carregarResumoRegistro } from "./actions";
 import { ANDARES, FUNCIONARIOS, LOCAIS, PRECO_POR_TIPO, TIPOS_LAVAGEM } from "../servico-options";
+import { CustomDatePicker } from "@/app/components/DatePickerModal";
 
 function todayLocalISO() {
   const d = new Date();
@@ -248,11 +249,10 @@ export default function RegistroClient() {
             <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">
               Data
             </label>
-            <input
-              type="date"
+            <CustomDatePicker
               value={dataHora}
-              onChange={(e) => setDataHora(e.target.value)}
-              className="w-full px-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-dark-navy font-bold outline-none focus:ring-2 focus:ring-primary transition-all"
+              onChange={setDataHora}
+              className="w-full px-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-dark-navy font-bold transition-all"
             />
           </div>
         </div>

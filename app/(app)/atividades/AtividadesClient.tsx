@@ -7,6 +7,7 @@ import type { Servico, UpdateServicoInput } from "@/lib/services/servicos";
 import { filterServicos, sortServicosByIdDesc } from "@/lib/services/servicos-utils";
 import { ANDARES, FUNCIONARIOS, LOCAIS, TIPOS_LAVAGEM } from "../servico-options";
 import { atualizarServico, excluirServico } from "./actions";
+import { CustomDatePicker } from "@/app/components/DatePickerModal";
 
 function toLocalDateTime(value: string) {
   const date = new Date(value);
@@ -434,32 +435,19 @@ export function AtividadesClient({
       {/* Filter row — data + torre */}
       <div className="flex gap-2">
         <div className="flex-1 bg-white rounded-2xl px-4 py-3 shadow-sm border border-slate-100 flex items-center gap-2">
-          <label htmlFor="atividades-filter-data" className="text-[10px] font-bold uppercase tracking-widest text-slate-400 shrink-0">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 shrink-0">
             Data
-          </label>
-          <input
+          </span>
+          <CustomDatePicker
             id="atividades-filter-data"
-            type="date"
             value={data}
-            onChange={(e) => {
-              const val = e.target.value;
+            onChange={(val) => {
               setData(val);
               pushParams({ data: val, page: 1 });
             }}
-            className="flex-1 outline-none text-dark-navy text-sm font-semibold bg-transparent min-w-0"
+            placeholder="dd/mm/aaaa"
+            className="flex-1 min-w-0"
           />
-          {data && (
-            <button
-              type="button"
-              onClick={() => {
-                setData("");
-                pushParams({ data: "", page: 1 });
-              }}
-              className="text-slate-300 hover:text-slate-500 shrink-0"
-            >
-              <X size={14} />
-            </button>
-          )}
         </div>
 
         <div className="flex-1 bg-white rounded-2xl px-4 py-3 shadow-sm border border-slate-100 flex items-center gap-2">
